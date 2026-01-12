@@ -123,3 +123,39 @@
     @apply bg-background text-foreground;
   }
 }
+@layer utilities {
+  .gradient-primary {
+    background: linear-gradient(135deg, #FF6F61 0%, #FF8A80 100%);
+  }
+  
+  .gradient-secondary {
+    background: linear-gradient(135deg, #6B5B95 0%, #9B8AC4 100%);
+  }
+  
+  .gradient-accent {
+    background: linear-gradient(135deg, #88D8B0 0%, #6BCF9F 100%);
+  }
+
+  .text-gradient {
+    background: linear-gradient(135deg, #FF6F61 0%, #88D8B0 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .card-shadow {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  }
+
+  .card-shadow-lg {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  }
+
+  .font-accent {
+    font-family: var(--font-bebas-neue), sans-serif;
+  }
+
+  .font-heading {
+    font-family: var(--font-outfit), sans-serif;
+  }
+}

@@ -15,13 +15,13 @@ export default function Navbar() {
         </Link>
 
         <div className="hidden md:flex items-center space-x-8">
-          <Link href="#services" className="text-sm font-medium hover:text-primary-600 transition-colors">
+          <Link href="#services" className="text-sm font-medium text-slate-700 hover:text-red-400 transition-colors">
             Services
           </Link>
-          <Link href="#how-it-works" className="text-sm font-medium hover:text-primary-600 transition-colors">
+          <Link href="#how-it-works" className="text-sm font-medium text-slate-700 hover:text-red-400 transition-colors">
             How It Works
           </Link>
-          <Link href="#about" className="text-sm font-medium hover:text-primary-600 transition-colors">
+          <Link href="#about" className="text-sm font-medium text-slate-700 hover:text-red-400 transition-colors">
             About
           </Link>
         </div>

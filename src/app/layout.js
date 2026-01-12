@@ -1,20 +1,20 @@
-import { Inter, Poppins, Space_Grotesk } from 'next/font/google'
+import { Outfit, Nunito_Sans, Bebas_Neue } from 'next/font/google'
 import './globals.css'
 
-const inter = Inter({ 
+const outfit = Outfit({ 
   subsets: ['latin'],
-  variable: '--font-inter',
+  variable: '--font-outfit',
 })
 
-const poppins = Poppins({ 
-  weight: ['400', '500', '600', '700', '800', '900'],
+const nunitoSans = Nunito_Sans({ 
   subsets: ['latin'],
-  variable: '--font-poppins',
+  variable: '--font-nunito-sans',
 })
 
-const spaceGrotesk = Space_Grotesk({ 
+const bebasNeue = Bebas_Neue({ 
+  weight: ['400'],
   subsets: ['latin'],
-  variable: '--font-space-grotesk',
+  variable: '--font-bebas-neue',
 })
 
 export const metadata = {
@@ -25,7 +25,7 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body className={`${inter.variable} ${poppins.variable} ${spaceGrotesk.variable}`}>
+      <body className={`${nunitoSans.variable} ${outfit.variable} ${bebasNeue.variable}`}>
         {children}
       </body>
     </html>
