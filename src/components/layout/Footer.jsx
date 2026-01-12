@@ -6,14 +6,12 @@ export default function Footer() {
       <div className="container mx-auto px-4 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="space-y-4">
-            <div className="flex items-center space-x-2">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg gradient-primary">
-                <span className="font-accent text-xl font-bold text-white">F</span>
-              </div>
-              <span className="font-accent text-2xl font-bold text-gradient">
+            <Link href="/" className="flex items-center space-x-3">
+              <img src="/fix-it-logo.png" alt="FixItNow" className="h-16 w-auto" />
+              <span className="font-accent text-3xl font-semibold text-slate-900">
                 FixItNow
               </span>
-            </div>
+            </Link>
             <p className="text-sm text-slate-600">
               Your trusted platform for home services. Connect with verified professionals instantly.
             </p>

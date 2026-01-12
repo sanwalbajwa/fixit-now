@@ -12,12 +12,19 @@ export default function Home() {
       <Navbar />
       
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-slate-50 via-white to-slate-100 pt-32 pb-40">
-        <div className="container mx-auto px-4 lg:px-8">
+      <section className="relative overflow-hidden bg-gradient-to-br from-slate-50 via-white to-slate-100 pt-20 pb-32">
+        {/* Decorative background elements */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute -top-40 -right-40 w-96 h-96 bg-red-200 rounded-full blur-3xl opacity-20"></div>
+          <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-emerald-200 rounded-full blur-3xl opacity-20"></div>
+        </div>
+
+        <div className="container mx-auto px-4 lg:px-8 relative z-10">
           <div className="grid lg:grid-cols-2 gap-16 items-center">
-            <div className="space-y-10 animate-fade-in">
-              <Badge className="inline-flex items-center gap-2 bg-red-100 text-red-800 border-red-300 px-4 py-2 text-sm font-medium shadow-sm">
-                <span className="animate-pulse">⚡</span> #1 Home Services Platform
+            <div className="space-y-8">
+              <Badge className="inline-flex items-center gap-2 bg-red-100 text-red-800 border-red-300 px-4 py-2 text-sm font-semibold shadow-sm">
+                <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
+                #1 Home Services Platform
               </Badge>
               
               <h1 className="font-heading text-5xl lg:text-7xl font-bold leading-tight">
@@ -30,14 +37,14 @@ export default function Home() {
                 Connect with verified professionals for plumbing, electrical, cleaning, carpentry, and more. Fast, reliable, and affordable.
               </p>
 
-              <div className="flex flex-col sm:flex-row gap-4 pt-4">
-                <Link href="/register">
-                  <Button size="lg" className="gradient-primary text-white text-lg px-10 py-7 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all hover:scale-105">
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Link href="/register?role=customer">
+                  <Button size="lg" className="gradient-primary text-white text-lg px-10 py-6 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all hover:scale-105 w-full sm:w-auto">
                     Get Started Free
                   </Button>
                 </Link>
                 <Link href="#how-it-works">
-                  <Button size="lg" variant="outline" className="text-lg px-10 py-7 rounded-xl border-2 border-slate-300 hover:border-red-500 hover:bg-red-50 transition-all">
+                  <Button size="lg" variant="outline" className="text-lg px-10 py-6 rounded-xl border-2 border-slate-300 hover:border-red-500 hover:bg-red-50 transition-all w-full sm:w-auto">
                     How It Works
                   </Button>
                 </Link>
@@ -45,15 +52,15 @@ export default function Home() {
 
               <div className="grid grid-cols-3 gap-6 pt-8 border-t border-slate-200">
                 <div className="text-center sm:text-left">
-                  <div className="font-heading text-4xl font-bold text-red-500 mb-1">1000+</div>
+                  <div className="font-heading text-3xl lg:text-4xl font-bold text-red-500 mb-1">1000+</div>
                   <div className="text-sm text-slate-500 font-medium">Verified Providers</div>
                 </div>
                 <div className="text-center sm:text-left">
-                  <div className="font-heading text-4xl font-bold text-red-500 mb-1">50K+</div>
+                  <div className="font-heading text-3xl lg:text-4xl font-bold text-red-500 mb-1">50K+</div>
                   <div className="text-sm text-slate-500 font-medium">Happy Customers</div>
                 </div>
                 <div className="text-center sm:text-left">
-                  <div className="font-heading text-4xl font-bold text-red-500 mb-1">4.9/5</div>
+                  <div className="font-heading text-3xl lg:text-4xl font-bold text-red-500 mb-1">4.9/5</div>
                   <div className="text-sm text-slate-500 font-medium">Average Rating</div>
                 </div>
               </div>
@@ -63,7 +70,7 @@ export default function Home() {
               <div className="relative z-10 rounded-3xl overflow-hidden shadow-2xl transform hover:scale-105 transition-transform duration-500">
                 <img
                   src="https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=900&q=80"
-                  alt="Home Services"
+                  alt="Home Services Professional"
                   className="w-full h-auto"
                 />
               </div>
@@ -143,26 +150,62 @@ export default function Home() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-32 bg-emerald-600 relative overflow-hidden">
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiAxOGMzLjMxNCAwIDYgMi42ODYgNiA2cy0yLjY4NiA2LTYgNi02LTIuNjg2LTYtNiAyLjY4Ni02IDYtNnoiIHN0cm9rZT0iI2ZmZiIgc3Ryb2tlLW9wYWNpdHk9Ii4xIi8+PC9nPjwvc3ZnPg==')] opacity-10"></div>
-        <div className="container mx-auto px-4 lg:px-8 text-center relative z-10">
-          <h2 className="font-accent text-4xl lg:text-5xl font-black text-white mb-8 leading-tight">
-            Ready To Get Started?
-          </h2>
-          <p className="text-xl text-white/95 mb-12 max-w-3xl mx-auto leading-relaxed">
-            Join thousands of satisfied customers who trust FixItNow for their home service needs.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-6 justify-center">
-            <Link href="/register?role=customer">
-              <Button size="lg" className="bg-white text-red-500 hover:bg-slate-100 text-lg px-12 py-7 rounded-xl font-bold shadow-2xl hover:shadow-white/50 transition-all hover:scale-105">
-                Book a Service
-              </Button>
-            </Link>
-            <Link href="/register?role=provider">
-              <Button size="lg" variant="outline" className="border-2 border-white text-white hover:bg-white/20 text-lg px-12 py-7 rounded-xl font-bold backdrop-blur-sm transition-all hover:scale-105">
-                Become a Provider
-              </Button>
-            </Link>
+      <section className="relative py-24 bg-emerald-600 overflow-hidden">
+        {/* Background pattern */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute inset-0" style={{
+            backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)',
+            backgroundSize: '40px 40px'
+          }}></div>
+        </div>
+        
+        {/* Decorative shapes */}
+        <div className="absolute top-0 left-0 w-64 h-64 bg-emerald-700 rounded-full blur-3xl opacity-30"></div>
+        <div className="absolute bottom-0 right-0 w-96 h-96 bg-emerald-400 rounded-full blur-3xl opacity-20"></div>
+
+        <div className="container mx-auto px-4 lg:px-8 relative z-10">
+          <div className="max-w-4xl mx-auto text-center">
+            <h2 className="font-accent text-4xl lg:text-5xl font-black text-white mb-6 leading-tight">
+              Ready To Get Started?
+            </h2>
+            <p className="text-xl text-white/95 mb-10 leading-relaxed">
+              Join thousands of satisfied customers who trust FixItNow for their home service needs. Get matched with verified professionals in minutes.
+            </p>
+            
+            {/* Trust badges */}
+            <div className="flex flex-wrap justify-center gap-8 mb-12">
+              <div className="flex items-center gap-2 text-white/90">
+                <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+                <span className="font-semibold">Verified Professionals</span>
+              </div>
+              <div className="flex items-center gap-2 text-white/90">
+                <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z" />
+                </svg>
+                <span className="font-semibold">24/7 Support</span>
+              </div>
+              <div className="flex items-center gap-2 text-white/90">
+                <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
+                </svg>
+                <span className="font-semibold">100% Satisfaction</span>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link href="/register?role=customer">
+                <Button size="lg" className="bg-white text-emerald-700 hover:bg-slate-100 text-lg px-10 py-6 rounded-xl font-bold shadow-2xl hover:shadow-white/50 transition-all hover:scale-105 w-full sm:w-auto">
+                  Book a Service
+                </Button>
+              </Link>
+              <Link href="/register?role=provider">
+                <Button size="lg" className="gradient-primary text-white hover:opacity-90 text-lg px-10 py-6 rounded-xl font-bold shadow-2xl transition-all hover:scale-105 w-full sm:w-auto">
+                  Become a Provider
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
       </section>

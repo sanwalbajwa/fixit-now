@@ -4,12 +4,10 @@ import { Button } from '@/components/ui/button'
 export default function Navbar() {
   return (
     <nav className="sticky top-0 z-50 w-full border-b bg-white/80 backdrop-blur-md">
-      <div className="container mx-auto flex h-16 items-center justify-between px-4">
-        <Link href="/" className="flex items-center space-x-2">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg gradient-primary">
-            <span className="font-accent text-xl font-bold text-white">F</span>
-          </div>
-          <span className="font-accent text-2xl font-bold text-gradient">
+      <div className="container mx-auto flex h-20 items-center justify-between px-4">
+        <Link href="/" className="flex items-center space-x-3">
+          <img src="/fix-it-logo.png" alt="FixItNow" className="h-16 w-auto" />
+          <span className="font-accent text-3xl font-semibold text-slate-900 hidden sm:block">
             FixItNow
           </span>
         </Link>
