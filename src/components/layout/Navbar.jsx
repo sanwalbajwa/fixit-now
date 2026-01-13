@@ -24,13 +24,18 @@ export default function Navbar() {
           </Link>
         </div>
 
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-3">
           <Link href="/login">
-            <Button variant="ghost">Sign In</Button>
+            <Button variant="ghost" size="sm">Sign In</Button>
           </Link>
-          <Link href="/register">
-            <Button className="gradient-primary text-white">
-              Get Started
+          <Link href="/register?role=customer">
+            <Button size="sm" className="bg-white text-emerald-700 hover:bg-slate-100 border border-slate-200">
+              Book Services
+            </Button>
+          </Link>
+          <Link href="/register?role=provider">
+            <Button size="sm" className="gradient-primary text-white hover:opacity-90">
+              Become Provider
             </Button>
           </Link>
         </div>

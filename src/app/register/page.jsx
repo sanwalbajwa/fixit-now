@@ -6,7 +6,6 @@ import { useSearchParams } from 'next/navigation'
 import { signup } from '@/lib/actions/auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
 function RegisterForm() {
   const searchParams = useSearchParams()
@@ -28,20 +27,38 @@ function RegisterForm() {
     }
   }
 
+  const isProvider = selectedRole === 'provider'
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-white to-blue-50 p-4">
-      <Card className="w-full max-w-md card-shadow-lg">
-        <CardHeader className="space-y-1 text-center">
-          <div className="flex justify-center mb-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg gradient-primary">
-              <span className="font-accent text-2xl font-bold text-white">F</span>
-            </div>
+    <div className="min-h-screen flex">
+      {/* Left Side - Illustration */}
+      <div className={`hidden lg:flex lg:w-3/5 items-center justify-center p-12 ${isProvider ? 'bg-gradient-to-br from-red-50 to-orange-50' : 'bg-gradient-to-br from-emerald-50 to-emerald-100'}`}>
+        <div className="max-w-lg text-center space-y-6">
+          <img
+            src="/Register.png"
+            alt="Handyman Services"
+            className="w-full max-w-md mx-auto"
+          />
+          <h1 className="font-heading text-4xl font-bold text-slate-900">
+            {isProvider ? 'Join Our Professional Network' : 'Welcome To FixItNow'}
+          </h1>
+          <p className="text-lg text-slate-600">
+            {isProvider 
+              ? 'Start earning by providing professional home services. Join thousands of verified providers.'
+              : 'Masterful Services: Fixing, Repairing, and Enhancing Your Space with Expertise, Simplifying Life, One Project at a Time.'}
+          </p>
+        </div>
+      </div>
+
+      {/* Right Side - Form */}
+      <div className="w-full lg:w-2/5 flex items-center justify-center p-8 bg-white">
+        <div className="w-full max-w-md space-y-8">
+          <div className="text-center lg:text-left">
+            <h2 className="text-3xl font-heading font-bold text-slate-900 mt-6">Sign Up</h2>
+            <p className="text-slate-600 mt-2">Create your account to get started</p>
           </div>
-          <CardTitle className="text-3xl font-heading font-bold">Create Account</CardTitle>
-          <CardDescription>Join FixItNow and get started today</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form action={handleSubmit} className="space-y-4">
+
+          <form action={handleSubmit} className="space-y-5">
             {error && (
               <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm">
                 {error}
@@ -50,132 +67,114 @@ function RegisterForm() {
 
             {/* Role Selection */}
             <div className="space-y-2">
-              <label className="text-sm font-medium">I want to:</label>
+              <label className="text-sm font-medium text-slate-700">I want to:</label>
               <div className="grid grid-cols-2 gap-3">
                 <button
                   type="button"
                   onClick={() => setSelectedRole('customer')}
                   className={`p-4 rounded-lg border-2 transition-all ${
                     selectedRole === 'customer'
-                      ? 'border-primary-500 bg-primary-50'
-                      : 'border-gray-200 hover:border-gray-300'
+                      ? 'border-emerald-500 bg-emerald-50'
+                      : 'border-slate-200 hover:border-slate-300'
                   }`}
                 >
                   <div className="text-2xl mb-2">🛒</div>
-                  <div className="font-semibold">Book Services</div>
-                  <div className="text-xs text-slate-600">I need help</div>
+                  <div className="font-semibold text-sm">Book Services</div>
                 </button>
                 <button
                   type="button"
                   onClick={() => setSelectedRole('provider')}
                   className={`p-4 rounded-lg border-2 transition-all ${
                     selectedRole === 'provider'
-                      ? 'border-primary-500 bg-primary-50'
-                      : 'border-gray-200 hover:border-gray-300'
+                      ? 'border-red-500 bg-red-50'
+                      : 'border-slate-200 hover:border-slate-300'
                   }`}
                 >
                   <div className="text-2xl mb-2">🔧</div>
-                  <div className="font-semibold">Provide Services</div>
-                  <div className="text-xs text-slate-600">I can help</div>
+                  <div className="font-semibold text-sm">Provide Services</div>
                 </button>
               </div>
               <input type="hidden" name="role" value={selectedRole} />
             </div>
 
             <div className="space-y-2">
-              <label htmlFor="name" className="text-sm font-medium">
-                Full Name
+              <label htmlFor="name" className="text-sm font-medium text-slate-700">
+                Full Name <span className="text-red-500">*</span>
               </label>
               <Input
                 id="name"
                 name="name"
                 type="text"
-                placeholder="John Doe"
+                placeholder="e.g. David Finley"
                 required
                 disabled={loading}
+                className="h-11"
               />
             </div>
 
             <div className="space-y-2">
-              <label htmlFor="email" className="text-sm font-medium">
-                Email Address
+              <label htmlFor="email" className="text-sm font-medium text-slate-700">
+                Email Address <span className="text-red-500">*</span>
               </label>
               <Input
                 id="email"
                 name="email"
                 type="email"
-                placeholder="you@example.com"
+                placeholder="e.g. david@gmail.com"
                 required
                 disabled={loading}
+                className="h-11"
               />
             </div>
 
             <div className="space-y-2">
-              <label htmlFor="phone" className="text-sm font-medium">
-                Phone Number
+              <label htmlFor="phone" className="text-sm font-medium text-slate-700">
+                Contact Number <span className="text-red-500">*</span>
               </label>
               <Input
                 id="phone"
                 name="phone"
                 type="tel"
-                placeholder="+92 300 1234567"
+                placeholder="e.g. +123 932545676"
                 required
                 disabled={loading}
+                className="h-11"
               />
             </div>
 
             <div className="space-y-2">
-              <label htmlFor="password" className="text-sm font-medium">
-                Password
+              <label htmlFor="password" className="text-sm font-medium text-slate-700">
+                Your Password <span className="text-red-500">*</span>
               </label>
               <Input
                 id="password"
                 name="password"
                 type="password"
-                placeholder="••••••••"
+                placeholder="e.g. #123@456"
                 required
                 minLength={6}
                 disabled={loading}
+                className="h-11"
               />
-              <p className="text-xs text-slate-500">Must be at least 6 characters</p>
-            </div>
-
-            <div className="flex items-start space-x-2">
-              <input
-                type="checkbox"
-                required
-                className="mt-1 rounded border-gray-300"
-                disabled={loading}
-              />
-              <label className="text-sm text-slate-600">
-                I agree to the{' '}
-                <Link href="#" className="text-primary-600 hover:underline">
-                  Terms of Service
-                </Link>{' '}
-                and{' '}
-                <Link href="#" className="text-primary-600 hover:underline">
-                  Privacy Policy
-                </Link>
-              </label>
             </div>
 
             <Button
               type="submit"
-              className="w-full gradient-primary text-white"
+              className={`w-full h-12 text-base font-semibold ${isProvider ? 'bg-red-500 hover:bg-red-600' : 'bg-emerald-600 hover:bg-emerald-700'} text-white`}
               disabled={loading}
             >
-              {loading ? 'Creating account...' : 'Create Account'}
+              {loading ? 'Creating account...' : 'Sign Up'}
             </Button>
-          </form>
 
-          <div className="mt-6 text-center text-sm">
-            <span className="text-slate-600">Already have an account? </span>
-            <Link href="/login" className="text-primary-600 font-medium hover:underline">
-              Sign in
-            </Link>
-          </div>
-        </CardContent>
-      </Card>
+            <p className="text-sm text-center text-slate-600">
+              Already have an account?{' '}
+              <Link href="/login" className={`font-semibold ${isProvider ? 'text-red-500 hover:text-red-600' : 'text-emerald-600 hover:text-emerald-700'}`}>
+                Sign In
+              </Link>
+            </p>
+          </form>
+        </div>
+      </div>
     </div>
   )
 }
