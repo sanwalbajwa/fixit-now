@@ -2,22 +2,27 @@ import { NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { createAdminClient } from '@/lib/supabase/server'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: '2023-10-16',
-})
-
-const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET
-
 export async function POST(req) {
+  const stripeSecretKey = process.env.STRIPE_SECRET_KEY
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET
+
+  if (!stripeSecretKey || !webhookSecret) {
+    return NextResponse.json(
+      { error: 'Stripe environment variables are not configured' },
+      { status: 500 }
+    )
+  }
+
+  const stripe = new Stripe(stripeSecretKey, {
+    apiVersion: '2023-10-16',
+  })
+
   const body = await req.text()
   const sig = req.headers.get('stripe-signature')
 
   let event
 
   try {
-    if (!webhookSecret) {
-      throw new Error('STRIPE_WEBHOOK_SECRET is not set')
-    }
     event = stripe.webhooks.constructEvent(body, sig, webhookSecret)
   } catch (err) {
     console.error('Webhook signature verification failed.', err.message)
