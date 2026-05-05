@@ -97,16 +97,60 @@ export async function getVerifiedProviders(filters = {}) {
     service_listings: listings?.filter(l => l.provider_id === provider.provider_id) || []
   }))
 
-  // Filter by category if provided
-  if (filters.category_id) {
-    return providersWithListings.filter(provider => 
-      provider.service_listings.some(listing => 
-        listing.category_id === filters.category_id
-      )
-    )
-  }
+  const searchTerm = (filters.search || '').trim().toLowerCase()
+  const availability = (filters.availability || '').trim().toLowerCase()
+  const minPrice = filters.min_price !== undefined && filters.min_price !== null && filters.min_price !== ''
+    ? Number(filters.min_price)
+    : null
+  const maxPrice = filters.max_price !== undefined && filters.max_price !== null && filters.max_price !== ''
+    ? Number(filters.max_price)
+    : null
 
-  return providersWithListings
+  return providersWithListings.filter((provider) => {
+    const listingsForProvider = provider.service_listings || []
+
+    if (filters.category_id) {
+      const hasCategory = listingsForProvider.some((listing) => listing.category_id === filters.category_id)
+      if (!hasCategory) return false
+    }
+
+    if (availability && availability !== 'any') {
+      const providerAvailability = String(provider.availability || '').toLowerCase()
+      if (providerAvailability !== availability) return false
+    }
+
+    if (minPrice !== null || maxPrice !== null) {
+      const matchesPrice = listingsForProvider.some((listing) => {
+        const price = Number(listing.price || 0)
+        if (Number.isNaN(price)) return false
+        if (minPrice !== null && price < minPrice) return false
+        if (maxPrice !== null && price > maxPrice) return false
+        return true
+      })
+
+      if (!matchesPrice) return false
+    }
+
+    if (searchTerm) {
+      const u = Array.isArray(provider.users) ? provider.users[0] : provider.users
+      const searchableParts = [
+        u?.name,
+        u?.email,
+        u?.phone,
+        provider.skills,
+        ...listingsForProvider.map((listing) => listing.title),
+        ...listingsForProvider.map((listing) => listing.description),
+        ...listingsForProvider.map((listing) => listing.service_categories?.category_name),
+      ]
+        .filter(Boolean)
+        .map((value) => String(value).toLowerCase())
+
+      const matchesSearch = searchableParts.some((value) => value.includes(searchTerm))
+      if (!matchesSearch) return false
+    }
+
+    return true
+  })
 }
 
 export async function getProviderById(providerId) {

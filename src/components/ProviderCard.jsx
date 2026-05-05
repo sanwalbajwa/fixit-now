@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Star, MapPin, CheckCircle, Briefcase } from 'lucide-react'
 
 export default function ProviderCard({ provider }) {
-  const user = provider.users
+  const user = Array.isArray(provider.users) ? provider.users[0] : provider.users
   const listings = provider.service_listings || []
   const primaryListing = listings[0]
   
@@ -38,7 +38,7 @@ export default function ProviderCard({ provider }) {
           
           <div className="flex-1 min-w-0">
             <h3 className="font-heading text-xl font-bold text-slate-900 truncate">
-              {user?.name || 'Provider'}
+              {user?.name || user?.email?.split('@')[0] || 'Provider'}
             </h3>
             
             {/* Rating */}

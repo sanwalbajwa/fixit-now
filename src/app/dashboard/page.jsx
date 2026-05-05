@@ -8,7 +8,7 @@ export default async function DashboardPage() {
     redirect('/login')
   }
 
-  const role = user.profile?.role
+  const role = user.profile?.role || user.user_metadata?.role
 
   if (role === 'customer') {
     redirect('/dashboard/customer')

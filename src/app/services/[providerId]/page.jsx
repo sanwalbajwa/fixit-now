@@ -17,7 +17,7 @@ export default async function ProviderDetailPage({ params }) {
     notFound()
   }
 
-  const user = provider.users
+  const user = Array.isArray(provider.users) ? provider.users[0] : provider.users
   const listings = provider.service_listings || []
   const ratings = provider.ratings || []
 
@@ -63,7 +63,7 @@ export default async function ProviderDetailPage({ params }) {
                   <div className="flex items-start justify-between mb-4">
                     <div>
                       <h1 className="font-heading text-4xl font-bold text-slate-900 mb-2">
-                        {user?.name || 'Provider'}
+                        {user?.name || user?.email?.split('@')[0] || 'Provider'}
                       </h1>
                       
                       {/* Rating */}

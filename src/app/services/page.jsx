@@ -9,12 +9,38 @@ import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import { Search, SlidersHorizontal } from 'lucide-react'
 
+function withParams(basePath, currentParams, updates = {}) {
+  const next = new URLSearchParams()
+
+  Object.entries({
+    category: currentParams?.category,
+    rating: currentParams?.rating,
+    sort: currentParams?.sort,
+    q: currentParams?.q,
+    availability: currentParams?.availability,
+    min_price: currentParams?.min_price,
+    max_price: currentParams?.max_price,
+    ...updates,
+  }).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== '') {
+      next.set(key, String(value))
+    }
+  })
+
+  const query = next.toString()
+  return query ? `${basePath}?${query}` : basePath
+}
+
 async function ServicesContent({ searchParams }) {
   const categories = await getAllCategories()
   const providers = await getVerifiedProviders({
     category_id: searchParams?.category,
     min_rating: searchParams?.rating,
-    sort_by: searchParams?.sort
+    sort_by: searchParams?.sort,
+    search: searchParams?.q,
+    availability: searchParams?.availability,
+    min_price: searchParams?.min_price,
+    max_price: searchParams?.max_price,
   })
 
   const selectedCategory = searchParams?.category
@@ -36,17 +62,25 @@ async function ServicesContent({ searchParams }) {
             </p>
 
             {/* Search Bar */}
-            <div className="bg-white rounded-2xl shadow-lg p-2 flex items-center gap-2">
+            <form action="/services" className="bg-white rounded-2xl shadow-lg p-2 flex items-center gap-2">
               <Search className="w-5 h-5 text-slate-400 ml-4" />
               <input
                 type="text"
+                name="q"
+                defaultValue={searchParams?.q || ''}
                 placeholder="Search by service, skills, or provider name..."
                 className="flex-1 px-4 py-3 outline-none text-slate-900"
               />
-              <Button className="gradient-primary text-white px-8">
+              {searchParams?.category && <input type="hidden" name="category" value={searchParams.category} />}
+              {searchParams?.rating && <input type="hidden" name="rating" value={searchParams.rating} />}
+              {searchParams?.sort && <input type="hidden" name="sort" value={searchParams.sort} />}
+              {searchParams?.availability && <input type="hidden" name="availability" value={searchParams.availability} />}
+              {searchParams?.min_price && <input type="hidden" name="min_price" value={searchParams.min_price} />}
+              {searchParams?.max_price && <input type="hidden" name="max_price" value={searchParams.max_price} />}
+              <Button type="submit" className="gradient-primary text-white px-8">
                 Search
               </Button>
-            </div>
+            </form>
           </div>
         </div>
       </section>
@@ -76,7 +110,7 @@ async function ServicesContent({ searchParams }) {
                   {categories.map((category) => (
                     <Link
                       key={category.category_id}
-                      href={`/services?category=${category.category_id}`}
+                      href={withParams('/services', searchParams, { category: category.category_id })}
                     >
                       <Button
                         variant={selectedCategory === category.category_id ? 'default' : 'outline'}
@@ -93,7 +127,7 @@ async function ServicesContent({ searchParams }) {
                 <div className="space-y-3 mt-6">
                   <h3 className="font-semibold text-slate-900 mb-3">Minimum Rating</h3>
                   {[4.5, 4.0, 3.5, 3.0].map((rating) => (
-                    <Link key={rating} href={`/services?rating=${rating}`}>
+                    <Link key={rating} href={withParams('/services', searchParams, { rating })}>
                       <Button variant="outline" className="w-full justify-start">
                         ⭐ {rating}+ Stars
                       </Button>
@@ -101,8 +135,46 @@ async function ServicesContent({ searchParams }) {
                   ))}
                 </div>
 
+                <div className="space-y-3 mt-6">
+                  <h3 className="font-semibold text-slate-900 mb-3">Availability</h3>
+                  <Link href={withParams('/services', searchParams, { availability: 'available' })}>
+                    <Button variant="outline" className="w-full justify-start">Available Now</Button>
+                  </Link>
+                  <Link href={withParams('/services', searchParams, { availability: 'busy' })}>
+                    <Button variant="outline" className="w-full justify-start">Currently Busy</Button>
+                  </Link>
+                </div>
+
+                <form action="/services" className="space-y-3 mt-6">
+                  <h3 className="font-semibold text-slate-900 mb-1">Price Range</h3>
+                  <div className="grid grid-cols-2 gap-2">
+                    <input
+                      type="number"
+                      min="0"
+                      name="min_price"
+                      defaultValue={searchParams?.min_price || ''}
+                      placeholder="Min"
+                      className="h-10 rounded-md border border-slate-200 bg-white px-3 text-sm outline-none focus:border-slate-400"
+                    />
+                    <input
+                      type="number"
+                      min="0"
+                      name="max_price"
+                      defaultValue={searchParams?.max_price || ''}
+                      placeholder="Max"
+                      className="h-10 rounded-md border border-slate-200 bg-white px-3 text-sm outline-none focus:border-slate-400"
+                    />
+                  </div>
+                  {searchParams?.category && <input type="hidden" name="category" value={searchParams.category} />}
+                  {searchParams?.rating && <input type="hidden" name="rating" value={searchParams.rating} />}
+                  {searchParams?.sort && <input type="hidden" name="sort" value={searchParams.sort} />}
+                  {searchParams?.q && <input type="hidden" name="q" value={searchParams.q} />}
+                  {searchParams?.availability && <input type="hidden" name="availability" value={searchParams.availability} />}
+                  <Button type="submit" variant="outline" className="w-full justify-center">Apply Price</Button>
+                </form>
+
                 {/* Clear Filters */}
-                {(selectedCategory || searchParams?.rating) && (
+                {(selectedCategory || searchParams?.rating || searchParams?.q || searchParams?.availability || searchParams?.min_price || searchParams?.max_price) && (
                   <Link href="/services">
                     <Button variant="ghost" className="w-full mt-4 text-red-600">
                       Clear All Filters

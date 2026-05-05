@@ -27,23 +27,61 @@ export async function createBooking(formData) {
   const providerId = formData.get('provider_id')
   const listingId = formData.get('listing_id')
   const serviceDate = formData.get('service_date')
+  const serviceTime = formData.get('service_time')
+  const serviceLocation = formData.get('service_location')
   const description = formData.get('description')
   const notes = formData.get('notes')
 
-  // Create booking
-  const { data: booking, error } = await supabase
+  const notePrefix = [
+    serviceTime ? `[Time] ${serviceTime}` : null,
+    serviceLocation ? `[Location] ${serviceLocation}` : null,
+  ].filter(Boolean).join('\n')
+
+  // Try storing dedicated fields first, then gracefully fallback to notes-only if columns are unavailable.
+  const primaryInsertPayload = {
+    customer_id: customer.customer_id,
+    provider_id: providerId,
+    listing_id: listingId,
+    service_date: serviceDate,
+    service_time: serviceTime || null,
+    service_location: serviceLocation || null,
+    description,
+    notes: notes || null,
+    status: 'pending'
+  }
+
+  let booking = null
+  let error = null
+
+  const primaryInsert = await supabase
     .from('bookings')
-    .insert({
-      customer_id: customer.customer_id,
-      provider_id: providerId,
-      listing_id: listingId,
-      service_date: serviceDate,
-      description,
-      notes,
-      status: 'pending'
-    })
+    .insert(primaryInsertPayload)
     .select()
     .single()
+
+  booking = primaryInsert.data
+  error = primaryInsert.error
+
+  if (error) {
+    const fallbackNotes = [notePrefix, notes || null].filter(Boolean).join('\n\n') || null
+
+    const fallbackInsert = await supabase
+      .from('bookings')
+      .insert({
+        customer_id: customer.customer_id,
+        provider_id: providerId,
+        listing_id: listingId,
+        service_date: serviceDate,
+        description,
+        notes: fallbackNotes,
+        status: 'pending'
+      })
+      .select()
+      .single()
+
+    booking = fallbackInsert.data
+    error = fallbackInsert.error
+  }
 
   if (error) {
     console.error('Error creating booking:', error)
@@ -88,6 +126,11 @@ export async function getCustomerBookings() {
           category_name,
           icon_url
         )
+      ),
+      payments (
+        status,
+        amount,
+        method
       )
     `)
     .eq('customer_id', customer.customer_id)
@@ -162,4 +205,119 @@ export async function updateBookingStatus(bookingId, newStatus) {
 
   revalidatePath('/dashboard')
   return { success: true }
+}
+
+export async function submitBookingRating(formData) {
+  try {
+    const supabase = await createClient()
+    const user = await getCurrentUser()
+
+    if (!user) {
+      return { error: 'You must be logged in to submit a rating' }
+    }
+
+    const ratingValue = Number(formData.get('rating'))
+    const review = formData.get('review')
+    const bookingId = formData.get('booking_id')
+
+    if (!ratingValue || ratingValue < 1 || ratingValue > 5) {
+      return { error: 'Rating must be between 1 and 5' }
+    }
+
+    const { data: customer } = await supabase
+      .from('customers')
+      .select('customer_id')
+      .eq('user_id', user.id)
+      .single()
+
+    if (!customer) {
+      return { error: 'Customer profile not found' }
+    }
+
+    const { data: booking } = await supabase
+      .from('bookings')
+      .select('booking_id, customer_id, provider_id, status')
+      .eq('booking_id', bookingId)
+      .eq('customer_id', customer.customer_id)
+      .single()
+
+    if (!booking || booking.status !== 'completed') {
+      return { error: 'Only completed bookings can be rated' }
+    }
+
+    // Prefer booking-bound uniqueness. If booking_id is unsupported in ratings, fallback to provider-level check.
+    const existingByBooking = await supabase
+      .from('ratings')
+      .select('rating_id')
+      .eq('customer_id', customer.customer_id)
+      .eq('booking_id', booking.booking_id)
+      .maybeSingle()
+
+    if (!existingByBooking.error && existingByBooking.data) {
+      return { error: 'You already submitted a rating for this booking' }
+    }
+
+    if (existingByBooking.error) {
+      const existingByProvider = await supabase
+        .from('ratings')
+        .select('rating_id')
+        .eq('customer_id', customer.customer_id)
+        .eq('provider_id', booking.provider_id)
+        .maybeSingle()
+
+      if (existingByProvider.data) {
+        return { error: 'You already submitted a rating for this provider' }
+      }
+    }
+
+    const insertWithBooking = await supabase
+      .from('ratings')
+      .insert({
+        customer_id: customer.customer_id,
+        provider_id: booking.provider_id,
+        booking_id: booking.booking_id,
+        rating: ratingValue,
+        review: review || null,
+      })
+
+    if (insertWithBooking.error) {
+      const fallbackInsert = await supabase
+        .from('ratings')
+        .insert({
+          customer_id: customer.customer_id,
+          provider_id: booking.provider_id,
+          rating: ratingValue,
+          review: review || null,
+        })
+
+      if (fallbackInsert.error) {
+        return { error: fallbackInsert.error.message }
+      }
+    }
+
+    const { data: providerRatings } = await supabase
+      .from('ratings')
+      .select('rating')
+      .eq('provider_id', booking.provider_id)
+
+    const totalReviews = providerRatings?.length || 0
+    const avgRating = totalReviews > 0
+      ? providerRatings.reduce((sum, item) => sum + Number(item.rating || 0), 0) / totalReviews
+      : 0
+
+    await supabase
+      .from('service_providers')
+      .update({
+        rating: Number(avgRating.toFixed(2)),
+        total_reviews: totalReviews,
+      })
+      .eq('provider_id', booking.provider_id)
+
+    revalidatePath('/dashboard/customer')
+    revalidatePath('/dashboard/customer/bookings')
+    revalidatePath(`/services/${booking.provider_id}`)
+    return { success: true }
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : 'Failed to submit rating' }
+  }
 }

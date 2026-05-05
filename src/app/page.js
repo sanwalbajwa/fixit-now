@@ -1,9 +1,11 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
+import HandymanShowcase from '@/components/home/HandymanShowcase'
 import { Wrench, Zap, Sparkles, Hammer, Paintbrush, Wind, Bug, Plug } from 'lucide-react'
 
 export default function Home() {
@@ -24,7 +26,7 @@ export default function Home() {
             <div className="space-y-8">
               <Badge className="inline-flex items-center gap-2 bg-red-100 text-red-800 border-red-300 px-4 py-2 text-sm font-semibold shadow-sm">
                 <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
-                #1 Home Services Platform
+                Trusted home services marketplace
               </Badge>
               
               <h1 className="font-heading text-5xl lg:text-7xl font-bold leading-tight">
@@ -34,7 +36,7 @@ export default function Home() {
               </h1>
               
               <p className="text-xl text-slate-600 max-w-xl leading-relaxed">
-                Connect with verified professionals for plumbing, electrical, cleaning, carpentry, and more. Fast, reliable, and affordable.
+                Connect with verified professionals for plumbing, electrical, cleaning, carpentry, and more. Fast booking, clear pricing, and polished service every time.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4">
@@ -48,6 +50,14 @@ export default function Home() {
                     How It Works
                   </Button>
                 </Link>
+              </div>
+
+              <div className="flex flex-wrap gap-3">
+                {['Verified pros', 'Same-day support', 'Upfront pricing'].map((item) => (
+                  <span key={item} className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 shadow-sm">
+                    {item}
+                  </span>
+                ))}
               </div>
 
               <div className="grid grid-cols-3 gap-6 pt-8 border-t border-slate-200">
@@ -67,15 +77,104 @@ export default function Home() {
             </div>
 
             <div className="relative lg:h-[600px] flex items-center justify-center">
-              <div className="relative z-10 rounded-3xl overflow-hidden shadow-2xl transform hover:scale-105 transition-transform duration-500">
-                <img
-                  src="https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=900&q=80"
-                  alt="Home Services Professional"
-                  className="w-full h-auto"
-                />
+              <HandymanShowcase />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Featured Work */}
+      <section className="py-24 bg-slate-950 text-white overflow-hidden">
+        <div className="container mx-auto px-4 lg:px-8">
+          <div className="grid gap-8 lg:grid-cols-[0.85fr_1.15fr] lg:items-end">
+            <div className="space-y-6">
+              <Badge className="border-emerald-400/20 bg-emerald-400/10 text-emerald-200">Built for home jobs</Badge>
+              <h2 className="font-heading text-4xl lg:text-5xl font-bold leading-tight">
+                A landing page that feels like a real service marketplace.
+              </h2>
+              <p className="text-lg leading-relaxed text-white/75">
+                Customers can picture the work, providers feel credible, and the visuals make the homepage feel alive instead of static.
+              </p>
+              <div className="grid grid-cols-3 gap-3 text-center">
+                <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                  <div className="text-2xl font-bold text-emerald-300">24/7</div>
+                  <div className="text-xs uppercase tracking-wide text-white/55">Support</div>
+                </div>
+                <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                  <div className="text-2xl font-bold text-emerald-300">Fast</div>
+                  <div className="text-xs uppercase tracking-wide text-white/55">Booking</div>
+                </div>
+                <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                  <div className="text-2xl font-bold text-emerald-300">Local</div>
+                  <div className="text-xs uppercase tracking-wide text-white/55">Experts</div>
+                </div>
               </div>
-              <div className="absolute -bottom-8 -right-8 w-80 h-80 bg-red-200 rounded-full blur-3xl opacity-20 animate-pulse"></div>
-              <div className="absolute -top-8 -left-8 w-80 h-80 bg-emerald-200 rounded-full blur-3xl opacity-20 animate-pulse" style={{animationDelay: '1s'}}></div>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-3">
+              {featuredCards.map((card) => (
+                <div key={card.title} className="group overflow-hidden rounded-3xl border border-white/10 bg-white/5 shadow-2xl transition-transform duration-300 hover:-translate-y-1">
+                  <div className="aspect-[4/5] overflow-hidden bg-slate-800">
+                    <img src={card.image} alt={card.title} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
+                  </div>
+                  <div className="p-4">
+                    <p className="text-xs uppercase tracking-[0.28em] text-white/50">{card.kicker}</p>
+                    <h3 className="mt-2 text-xl font-bold text-white">{card.title}</h3>
+                    <p className="mt-2 text-sm leading-6 text-white/70">{card.description}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Why Choose Us */}
+      <section className="py-28 bg-white">
+        <div className="container mx-auto px-4 lg:px-8">
+          <div className="grid gap-10 lg:grid-cols-[1fr_1.1fr] lg:items-center">
+            <div className="space-y-6">
+              <Badge className="bg-amber-100 text-amber-800 border-amber-300 px-4 py-2 text-sm font-medium shadow-sm">
+                Why homeowners choose FixItNow
+              </Badge>
+              <h2 className="font-heading text-4xl lg:text-5xl font-bold leading-tight text-slate-900">
+                A cleaner way to book the right person for the job.
+              </h2>
+              <p className="text-xl leading-relaxed text-slate-600 max-w-2xl">
+                From emergency fixes to routine maintenance, the platform makes it easy to discover trustworthy pros, compare options, and book with confidence.
+              </p>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                {benefits.map((benefit) => (
+                  <Card key={benefit.title} className="border-2 border-slate-100 rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300">
+                    <CardContent className="p-6 space-y-3">
+                      <div className="flex items-center justify-between gap-3">
+                        <h3 className="text-lg font-bold text-slate-900">{benefit.title}</h3>
+                        <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">{benefit.badge}</span>
+                      </div>
+                      <p className="text-sm leading-6 text-slate-600">{benefit.description}</p>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              {proofCards.map((card, index) => (
+                <div
+                  key={card.title}
+                  className={`group overflow-hidden rounded-[2rem] border bg-white shadow-xl ${index === 0 ? 'sm:col-span-2' : ''}`}
+                >
+                  <div className={index === 0 ? 'relative h-80' : 'relative h-64'}>
+                    <Image src={card.image} alt={card.title} fill className="object-cover transition duration-500 group-hover:scale-105" sizes="(max-width: 768px) 100vw, 50vw" />
+                  </div>
+                  <div className="p-5">
+                    <p className="text-xs uppercase tracking-[0.28em] text-slate-400">{card.kicker}</p>
+                    <h3 className="mt-2 text-2xl font-bold text-slate-900">{card.title}</h3>
+                    <p className="mt-2 text-sm leading-6 text-slate-600">{card.description}</p>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -110,6 +209,44 @@ export default function Home() {
                     {service.providers} providers
                     <span className="group-hover:translate-x-1 transition-transform">→</span>
                   </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Real Projects Gallery */}
+      <section className="py-28 bg-slate-50">
+        <div className="container mx-auto px-4 lg:px-8">
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between mb-12">
+            <div className="max-w-3xl space-y-4">
+              <Badge className="bg-slate-900 text-white px-4 py-2 text-sm font-medium shadow-sm">Real jobs, real photos</Badge>
+              <h2 className="font-heading text-4xl lg:text-5xl font-bold leading-tight text-slate-900">
+                High-definition visuals that make the service feel tangible.
+              </h2>
+              <p className="text-xl text-slate-600 leading-relaxed">
+                Use the image-led sections to showcase the quality of the work, not just the category names.
+              </p>
+            </div>
+            <div className="rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
+              <p className="text-sm font-medium text-slate-500">Popular categories</p>
+              <p className="mt-1 text-lg font-semibold text-slate-900">Plumbing, electrical, painting, and repairs</p>
+            </div>
+          </div>
+
+          <div className="grid gap-6 lg:grid-cols-3">
+            {galleryCards.map((card) => (
+              <Card key={card.title} className="overflow-hidden rounded-[2rem] border-0 shadow-xl bg-white">
+                <div className="relative h-72">
+                  <Image src={card.image} alt={card.title} fill className="object-cover" sizes="(max-width: 1024px) 100vw, 33vw" />
+                </div>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between gap-3">
+                    <h3 className="text-2xl font-bold text-slate-900">{card.title}</h3>
+                    <Badge variant="outline">{card.tag}</Badge>
+                  </div>
+                  <p className="mt-3 text-sm leading-6 text-slate-600">{card.description}</p>
                 </CardContent>
               </Card>
             ))}
@@ -278,5 +415,91 @@ const steps = [
   {
     title: 'Get It Done',
     description: 'Relax while our expert completes your job perfectly'
+  },
+]
+
+const featuredCards = [
+  {
+    title: 'Handyman Fixes',
+    kicker: 'Home repair',
+    image: 'https://images.unsplash.com/photo-1581141849291-1125c7b692b5?q=80&w=1000&auto=format&fit=crop',
+    description: 'Perfect for quick fixes, furniture assembly, and on-site repairs that need a trusted set of hands.',
+  },
+  {
+    title: 'Electrical Help',
+    kicker: 'Safe work',
+    image: 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?q=80&w=1000&auto=format&fit=crop',
+    description: 'Showcase electricians, maintenance work, and clean utility-focused service visuals.',
+  },
+  {
+    title: 'All Tools Ready',
+    kicker: 'Maintenance',
+    image: 'https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?q=80&w=1000&auto=format&fit=crop',
+    description: 'A flexible image that feels at home on a handyman platform and supports broad services.',
+  },
+]
+
+const benefits = [
+  {
+    title: 'Verified professionals',
+    badge: 'Trust',
+    description: 'Highlight review scores, identity checks, and provider profiles so customers know who is showing up.',
+  },
+  {
+    title: 'Fast booking flow',
+    badge: 'Speed',
+    description: 'Turn the browsing experience into a clear, low-friction path from discovery to booking.',
+  },
+  {
+    title: 'Clear service scope',
+    badge: 'Clarity',
+    description: 'Show price bands, availability, and job details before the customer commits.',
+  },
+  {
+    title: 'Built for repeat use',
+    badge: 'Retention',
+    description: 'Make the homepage feel reliable enough that users come back the next time a home job appears.',
+  },
+]
+
+const proofCards = [
+  {
+    kicker: 'Hero shot',
+    title: 'Weekend repairs',
+    image: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=1000&auto=format&fit=crop',
+    description: 'A confident, inviting visual for general handyman services and quick home fixes.',
+  },
+  {
+    kicker: 'Service mood',
+    title: 'Electrical support',
+    image: 'https://images.unsplash.com/photo-1555963966-b7ae5404b6ed?q=80&w=1000&auto=format&fit=crop',
+    description: 'Use this tighter image for technical work, safety-first service, and utility jobs.',
+  },
+  {
+    kicker: 'Support view',
+    title: 'Ready when needed',
+    image: 'https://images.unsplash.com/photo-1505798577917-a65157d3320a?q=80&w=1000&auto=format&fit=crop',
+    description: 'A flexible image that helps the brand feel polished and broad enough for many categories.',
+  },
+]
+
+const galleryCards = [
+  {
+    title: 'Quick fixes',
+    tag: 'Handyman',
+    image: 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?q=80&w=1000&auto=format&fit=crop',
+    description: 'Showcases the type of everyday repair customers book most often, from small installs to furniture assembly.',
+  },
+  {
+    title: 'Safe wiring',
+    tag: 'Electric',
+    image: 'https://images.unsplash.com/photo-1621905252507-b35492cc74b4?q=80&w=1000&auto=format&fit=crop',
+    description: 'A stronger visual for technical service categories where trust and precision matter most.',
+  },
+  {
+    title: 'Reliable maintenance',
+    tag: 'General',
+    image: 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?q=80&w=1000&auto=format&fit=crop',
+    description: 'Good for broad maintenance, appliance support, and recurring service requests across the platform.',
   },
 ]
