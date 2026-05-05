@@ -6,7 +6,7 @@ export default function Navbar() {
     <nav className="sticky top-0 z-50 w-full border-b bg-white/80 backdrop-blur-md">
       <div className="container mx-auto flex h-20 items-center justify-between px-4">
         <Link href="/" className="flex items-center space-x-3">
-          <img src="/fix-it-logo.png" alt="FixItNow" className="h-16 w-auto" />
+          <img src="/Fix-it-logo.png" alt="FixItNow" className="h-16 w-auto" />
           <span className="font-accent text-3xl font-semibold text-slate-900 hidden sm:block">
             FixItNow
           </span>

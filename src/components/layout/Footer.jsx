@@ -7,7 +7,7 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="space-y-4">
             <Link href="/" className="flex items-center space-x-3">
-              <img src="/fix-it-logo.png" alt="FixItNow" className="h-16 w-auto" />
+              <img src="/Fix-it-logo.png" alt="FixItNow" className="h-16 w-auto" />
               <span className="font-accent text-3xl font-semibold text-slate-900">
                 FixItNow
               </span>
