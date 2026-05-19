@@ -2,43 +2,55 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { getCurrentUser, signout } from '@/lib/actions/auth'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 
 export default async function ProviderLayout({ children }) {
   const user = await getCurrentUser()
-
-  if (!user) {
-    redirect('/login')
-  }
+  if (!user) redirect('/login')
 
   const role = user.profile?.role || user.user_metadata?.role
-
-  if (role !== 'provider') {
-    redirect('/dashboard')
-  }
+  if (role !== 'provider') redirect('/dashboard')
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <nav className="border-b bg-white/90 backdrop-blur">
+      <nav className="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur-xl shadow-sm">
         <div className="container mx-auto flex flex-col gap-4 px-4 py-4 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex items-center space-x-2">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg gradient-primary">
-              <span className="font-accent text-xl font-bold text-white">F</span>
+
+          {/* Brand */}
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-[#009689] to-teal-700 shadow-sm">
+              <span className="font-accent text-lg font-bold text-white">F</span>
             </div>
             <div>
-              <span className="font-accent text-2xl font-bold text-gradient">FixItNow</span>
-              <div className="text-xs text-slate-500">Provider workspace</div>
+              <span className="font-accent text-xl font-bold">
+                <span className="text-[#009689]">Fixit</span><span className="text-[#f97c66]">Now</span>
+              </span>
+              <p className="text-[10px] text-slate-400 leading-none mt-0.5">Provider workspace</p>
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
-            <Link href="/dashboard/provider"><Button variant="ghost" size="sm">Overview</Button></Link>
-            <Link href="/dashboard/provider/bookings"><Button variant="ghost" size="sm">Requests</Button></Link>
-            <Link href="/dashboard/provider/services"><Button variant="ghost" size="sm">My Services</Button></Link>
-            <Link href="/dashboard/provider/notifications"><Button variant="ghost" size="sm">Notifications</Button></Link>
-            <Link href="/dashboard/provider/profile"><Button variant="ghost" size="sm">Profile</Button></Link>
-            <Badge className="bg-amber-100 text-amber-700 border-amber-200">Provider</Badge>
-            <form action={signout}><Button variant="outline" size="sm">Sign Out</Button></form>
+          {/* Nav + actions */}
+          <div className="flex flex-wrap items-center gap-1.5">
+            {[
+              { href: '/dashboard/provider',              label: 'Overview'      },
+              { href: '/dashboard/provider/bookings',     label: 'Requests'      },
+              { href: '/dashboard/provider/services',     label: 'My Services'   },
+              { href: '/dashboard/provider/notifications',label: 'Notifications' },
+              { href: '/dashboard/provider/profile',      label: 'Profile'       },
+            ].map(({ href, label }) => (
+              <Link key={href} href={href}>
+                <Button variant="ghost" size="sm" className="text-slate-600 hover:text-[#009689] hover:bg-[#009689]/8">
+                  {label}
+                </Button>
+              </Link>
+            ))}
+
+            <span className="ml-1 inline-flex items-center rounded-full border border-[#f97c66]/25 bg-[#f97c66]/10 px-2.5 py-0.5 text-xs font-semibold text-[#f97c66]">
+              Provider
+            </span>
+
+            <form action={signout}>
+              <Button variant="outline" size="sm" className="ml-1">Sign Out</Button>
+            </form>
           </div>
         </div>
       </nav>

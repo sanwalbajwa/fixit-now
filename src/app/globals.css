@@ -125,19 +125,23 @@
 }
 @layer utilities {
   .gradient-primary {
-    background: linear-gradient(135deg, #FF6F61 0%, #FF8A80 100%);
+    background: linear-gradient(135deg, #f97c66 0%, #ffab94 100%);
   }
-  
+
+  .gradient-brand {
+    background: linear-gradient(135deg, #f97c66 0%, #009689 100%);
+  }
+
   .gradient-secondary {
-    background: linear-gradient(135deg, #6B5B95 0%, #9B8AC4 100%);
+    background: linear-gradient(135deg, #009689 0%, #00b8a9 100%);
   }
-  
+
   .gradient-accent {
-    background: linear-gradient(135deg, #88D8B0 0%, #6BCF9F 100%);
+    background: linear-gradient(135deg, #009689 0%, #00c9b8 100%);
   }
 
   .text-gradient {
-    background: linear-gradient(135deg, #FF6F61 0%, #88D8B0 100%);
+    background: linear-gradient(135deg, #f97c66 0%, #009689 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -158,4 +162,25 @@
   .font-heading {
     font-family: var(--font-outfit), sans-serif;
   }
+}
+
+.dark .admin-dashboard-shell .text-slate-900 {
+  color: rgb(248 250 252);
+}
+
+.dark .admin-dashboard-shell .text-slate-700 {
+  color: rgb(203 213 225);
+}
+
+.dark .admin-dashboard-shell .text-slate-600,
+.dark .admin-dashboard-shell .text-slate-500 {
+  color: rgb(148 163 184);
+}
+
+.dark .admin-dashboard-shell .bg-white {
+  background-color: rgb(15 23 42);
+}
+
+.dark .admin-dashboard-shell .hover\:bg-slate-50:hover {
+  background-color: rgb(30 41 59);
 }

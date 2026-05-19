@@ -2,59 +2,119 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { cn } from '@/lib/utils'
+import {
+  Sidebar, SidebarContent, SidebarFooter, SidebarHeader,
+  SidebarMenu, SidebarMenuButton, SidebarMenuItem,
+  SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
+  SidebarRail,
+} from '@/components/ui/sidebar'
+import {
+  LayoutDashboard, Users, Wrench, CalendarCheck,
+  Layers, Bell, User, Shield,
+} from 'lucide-react'
 
 const navItems = [
-  { href: '/dashboard/admin', label: 'Overview', description: 'Snapshot and queues' },
-  { href: '/dashboard/admin/users', label: 'Users', description: 'Roles and accounts' },
-  { href: '/dashboard/admin/providers', label: 'Providers', description: 'Verification workflow' },
-  { href: '/dashboard/admin/bookings', label: 'Bookings', description: 'Status management' },
-  { href: '/dashboard/admin/services', label: 'Services', description: 'Catalog and categories' },
-  { href: '/dashboard/admin/notifications', label: 'Notifications', description: 'Operational alerts' },
-  { href: '/dashboard/admin/profile', label: 'Profile', description: 'Admin account settings' },
+  { href: '/dashboard/admin',               icon: LayoutDashboard, label: 'Overview',      desc: 'Snapshot & queues'    },
+  { href: '/dashboard/admin/users',         icon: Users,           label: 'Users',          desc: 'Roles & accounts'     },
+  { href: '/dashboard/admin/providers',     icon: Wrench,          label: 'Providers',      desc: 'Verification workflow'},
+  { href: '/dashboard/admin/bookings',      icon: CalendarCheck,   label: 'Bookings',       desc: 'Status management'    },
+  { href: '/dashboard/admin/services',      icon: Layers,          label: 'Services',       desc: 'Catalog & categories' },
+  { href: '/dashboard/admin/notifications', icon: Bell,            label: 'Notifications',  desc: 'Operational alerts'   },
+  { href: '/dashboard/admin/profile',       icon: User,            label: 'Profile',        desc: 'Admin account'        },
 ]
 
 export default function AdminSidebar() {
   const pathname = usePathname()
 
   return (
-    <aside className="hidden lg:flex lg:w-80 lg:flex-col border-r bg-slate-950 text-white">
-      <div className="p-6 border-b border-white/10">
-        <div className="flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 text-slate-950 font-bold">
-            A
-          </div>
-          <div>
-            <p className="text-lg font-semibold">FixItNow Admin</p>
-            <p className="text-sm text-white/60">Operations control center</p>
-          </div>
-        </div>
-      </div>
+    // Wrap in a div that overrides the sidebar CSS variables to force dark theme
+    <div style={{
+      '--sidebar':                    'oklch(0.10 0.025 264)',
+      '--sidebar-foreground':         'oklch(0.97 0.003 247)',
+      '--sidebar-accent':             'oklch(0.16 0.03 264)',
+      '--sidebar-accent-foreground':  'oklch(0.97 0.003 247)',
+      '--sidebar-border':             'oklch(1 0 0 / 8%)',
+      '--sidebar-primary':            '#009689',
+      '--sidebar-primary-foreground': '#ffffff',
+      '--sidebar-ring':               '#009689',
+    }}>
+      <Sidebar collapsible="icon" variant="sidebar">
 
-      <nav className="flex-1 p-4 space-y-2">
-        {navItems.map((item) => {
-          const isActive = pathname === item.href
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                'block rounded-2xl border px-4 py-3 transition-all',
-                isActive
-                  ? 'border-amber-400/40 bg-amber-400/10 text-white shadow-lg shadow-amber-400/10'
-                  : 'border-white/10 bg-white/5 text-white/75 hover:bg-white/10 hover:text-white'
-              )}
-            >
-              <div className="text-sm font-semibold">{item.label}</div>
-              <div className="text-xs text-inherit/70 mt-0.5">{item.description}</div>
-            </Link>
-          )
-        })}
-      </nav>
+        {/* ── Brand header ──────────────────────────────────── */}
+        <SidebarHeader className="border-b border-white/8 pb-4">
+          <div className="flex items-center gap-3 px-2 py-1">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#009689] to-teal-700 shadow-lg shadow-[#009689]/30">
+              <span className="font-accent text-base font-bold text-white">F</span>
+            </div>
+            <div className="min-w-0 group-data-[collapsible=icon]:hidden">
+              <p className="text-sm font-bold leading-none">
+                <span className="text-[#009689]">Fixit</span>
+                <span className="text-[#f97c66]">Now</span>
+                <span className="ml-1.5 text-white/40 font-normal text-xs">Admin</span>
+              </p>
+              <p className="text-[10px] text-white/35 mt-0.5 leading-none">Operations center</p>
+            </div>
+          </div>
+        </SidebarHeader>
 
-      <div className="p-4 border-t border-white/10 text-xs text-white/50">
-        Admin role can manage users, verify providers, and moderate bookings.
-      </div>
-    </aside>
+        {/* ── Nav ───────────────────────────────────────────── */}
+        <SidebarContent>
+          <SidebarGroup>
+            <SidebarGroupLabel className="text-white/30 text-[10px] uppercase tracking-widest px-4">
+              Navigation
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {navItems.map((item) => {
+                  const Icon = item.icon
+                  const active = pathname === item.href
+                  return (
+                    <SidebarMenuItem key={item.href}>
+                      <SidebarMenuButton
+                        asChild
+                        isActive={active}
+                        tooltip={item.label}
+                        className={
+                          active
+                            ? 'bg-[#009689]/20 text-white border border-[#009689]/30 hover:bg-[#009689]/25'
+                            : 'text-white/60 hover:bg-white/6 hover:text-white border border-transparent'
+                        }
+                      >
+                        <Link href={item.href} className="flex items-center gap-3">
+                          <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg transition-colors ${
+                            active ? 'bg-[#009689] text-white' : 'bg-white/8 text-white/60'
+                          }`}>
+                            <Icon className="size-3.5" />
+                          </div>
+                          <span className="font-medium">{item.label}</span>
+                          {active && (
+                            <span className="ml-auto h-1.5 w-1.5 rounded-full bg-[#009689] shrink-0" />
+                          )}
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  )
+                })}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        </SidebarContent>
+
+        {/* ── Footer ────────────────────────────────────────── */}
+        <SidebarFooter className="border-t border-white/8 pt-4">
+          <div className="group-data-[collapsible=icon]:hidden rounded-xl border border-white/8 bg-white/5 px-3 py-2.5 mx-2">
+            <div className="flex items-center gap-2 mb-1">
+              <Shield className="size-3.5 text-[#009689]" />
+              <p className="text-xs font-semibold text-white/60">Admin Access</p>
+            </div>
+            <p className="text-[10px] text-white/30 leading-relaxed">
+              Manage users, verify providers, moderate bookings.
+            </p>
+          </div>
+        </SidebarFooter>
+
+        <SidebarRail />
+      </Sidebar>
+    </div>
   )
 }

@@ -1,6 +1,7 @@
 'use client'
 
 import { useRouter, useSearchParams } from 'next/navigation'
+import { ArrowUpDown } from 'lucide-react'
 
 export default function ServicesSortFilter() {
   const router = useRouter()
@@ -15,9 +16,10 @@ export default function ServicesSortFilter() {
 
   return (
     <div className="flex items-center gap-2">
-      <span className="text-sm text-slate-600">Sort by:</span>
+      <ArrowUpDown className="size-4 text-slate-400" />
+      <span className="text-sm text-slate-500">Sort:</span>
       <select
-        className="px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+        className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 outline-none focus:border-[#009689] focus:ring-2 focus:ring-[#009689]/20 transition-colors"
         value={selectedSort}
         onChange={handleSortChange}
       >

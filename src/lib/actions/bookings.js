@@ -131,6 +131,11 @@ export async function getCustomerBookings() {
         status,
         amount,
         method
+      ),
+      ratings (
+        rating_id,
+        rating,
+        review
       )
     `)
     .eq('customer_id', customer.customer_id)
@@ -208,6 +213,8 @@ export async function updateBookingStatus(bookingId, newStatus) {
 }
 
 export async function submitBookingRating(formData) {
+  let redirectPath = null
+
   try {
     const supabase = await createClient()
     const user = await getCurrentUser()
@@ -316,8 +323,10 @@ export async function submitBookingRating(formData) {
     revalidatePath('/dashboard/customer')
     revalidatePath('/dashboard/customer/bookings')
     revalidatePath(`/services/${booking.provider_id}`)
-    return { success: true }
+    redirectPath = '/dashboard/customer/bookings'
   } catch (error) {
     return { error: error instanceof Error ? error.message : 'Failed to submit rating' }
   }
+
+  if (redirectPath) redirect(redirectPath)
 }

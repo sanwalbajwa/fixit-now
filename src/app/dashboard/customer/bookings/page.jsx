@@ -1,20 +1,46 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+import {
+  ClipboardList, MessageCircle, Star, CreditCard,
+  CheckCircle2, MapPin, CalendarDays, Clock,
+  Wrench, User, Search,
+} from 'lucide-react'
 import { getCurrentUser } from '@/lib/actions/auth'
 import { getCustomerBookings, submitBookingRating } from '@/lib/actions/bookings'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import CheckoutButton from '@/components/CheckoutButton'
 
-function badgeClass(status) {
-  const map = {
-    pending: 'bg-amber-100 text-amber-700 border-amber-200',
-    confirmed: 'bg-sky-100 text-sky-700 border-sky-200',
-    in_progress: 'bg-violet-100 text-violet-700 border-violet-200',
-    completed: 'bg-emerald-100 text-emerald-700 border-emerald-200',
-    cancelled: 'bg-rose-100 text-rose-700 border-rose-200',
-  }
-  return map[status] || 'bg-slate-100 text-slate-700 border-slate-200'
+/* ─── helpers ──────────────────────────────────────────────── */
+
+const STATUS = {
+  pending:     { bg: 'bg-amber-50',   border: 'border-amber-200',  dot: 'bg-amber-400',   text: 'text-amber-700',   label: 'Pending'     },
+  confirmed:   { bg: 'bg-sky-50',     border: 'border-sky-200',    dot: 'bg-sky-500',      text: 'text-sky-700',     label: 'Confirmed'   },
+  in_progress: { bg: 'bg-violet-50',  border: 'border-violet-200', dot: 'bg-violet-500',   text: 'text-violet-700',  label: 'In Progress' },
+  completed:   { bg: 'bg-emerald-50', border: 'border-emerald-200',dot: 'bg-emerald-500',  text: 'text-emerald-700', label: 'Completed'   },
+  cancelled:   { bg: 'bg-rose-50',    border: 'border-rose-200',   dot: 'bg-rose-400',     text: 'text-rose-700',    label: 'Cancelled'   },
+}
+
+function StatusPill({ status }) {
+  const s = STATUS[status] || STATUS.pending
+  return (
+    <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-semibold ${s.bg} ${s.border} ${s.text}`}>
+      <span className={`h-1.5 w-1.5 rounded-full ${s.dot}`} />
+      {s.label}
+    </span>
+  )
+}
+
+function StarDisplay({ rating }) {
+  const r = Number(rating || 0)
+  return (
+    <span className="inline-flex items-center gap-0.5">
+      {Array.from({ length: 5 }, (_, i) => (
+        <Star
+          key={i}
+          className={`size-4 ${i < r ? 'fill-amber-400 stroke-amber-400' : 'fill-none stroke-slate-300'}`}
+        />
+      ))}
+    </span>
+  )
 }
 
 function extractFromNotes(notes, label) {
@@ -23,111 +49,210 @@ function extractFromNotes(notes, label) {
   return match?.[1] || null
 }
 
+function formatDate(date) {
+  if (!date) return null
+  return new Date(date).toLocaleDateString('en', { weekday: 'short', month: 'short', day: 'numeric' })
+}
+
+/* ─── page ──────────────────────────────────────────────────── */
 export default async function CustomerBookingsPage() {
   const user = await getCurrentUser()
-
-  if (!user) {
-    redirect('/login')
-  }
+  if (!user) redirect('/login')
 
   const bookings = await getCustomerBookings()
+  const active    = bookings.filter((b) => !['completed', 'cancelled'].includes(b.status)).length
+  const completed = bookings.filter((b) => b.status === 'completed').length
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>My Bookings</CardTitle>
-        <CardDescription>Track every service request from pending to completed.</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {bookings.length === 0 ? (
-          <p className="text-sm text-slate-500">No bookings yet. Browse providers to create your first request.</p>
-        ) : (
-          bookings.map((booking) => (
-            <div key={booking.booking_id} className="rounded-xl border p-4 space-y-3">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <p className="font-semibold text-slate-900">{booking.service_listings?.title || 'Service booking'}</p>
-                  <p className="text-sm text-slate-500">{booking.description || 'No description provided'}</p>
-                </div>
-                <Badge className={badgeClass(booking.status)}>{booking.status}</Badge>
-              </div>
-              <div className="grid gap-3 text-sm text-slate-600 md:grid-cols-3">
-                <div>
-                  <p className="font-medium text-slate-900">Provider</p>
-                  <p>{booking.service_providers?.users?.name || booking.service_providers?.users?.email || 'Unknown'}</p>
-                </div>
-                <div>
-                  <p className="font-medium text-slate-900">Service</p>
-                  <p>PKR {Number(booking.service_listings?.price || 0).toLocaleString()}</p>
-                </div>
-                <div>
-                  <p className="font-medium text-slate-900">Scheduled</p>
-                  <p>
-                    {booking.service_date ? new Date(booking.service_date).toLocaleDateString() : 'Not scheduled'}
-                    {booking.service_time ? ` at ${booking.service_time}` : ''}
-                  </p>
-                </div>
-              </div>
+    <div className="space-y-6">
 
-              <div className="text-sm text-slate-600">
-                <p className="font-medium text-slate-900">Location</p>
-                <p>{booking.service_location || extractFromNotes(booking.notes, 'Location') || 'Not provided'}</p>
-              </div>
+      {/* ── Header ───────────────────────────────────────────── */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">My Bookings</h1>
+          <p className="text-sm text-slate-500">
+            {active} active · {completed} completed
+          </p>
+        </div>
+        <Link
+          href="/dashboard/customer/services"
+          className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 transition-colors"
+        >
+          <Search className="size-4" /> New Booking
+        </Link>
+      </div>
 
-              {['confirmed', 'in_progress', 'accepted'].includes(booking.status) && (
-                <div className="pt-2">
-                  <Link href={`/dashboard/chat/${booking.booking_id}`}>
-                    <button className="inline-flex h-9 items-center justify-center rounded-md bg-emerald-100 px-4 text-sm font-semibold text-emerald-800 hover:bg-emerald-200 transition-colors">
-                      💬 Chat with Provider
-                    </button>
-                  </Link>
-                </div>
-              )}
+      {/* ── Empty state ───────────────────────────────────────── */}
+      {bookings.length === 0 && (
+        <div className="flex flex-col items-center justify-center gap-4 rounded-2xl border-2 border-dashed border-slate-200 bg-white py-20 text-center">
+          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
+            <ClipboardList className="size-8" />
+          </div>
+          <div>
+            <p className="font-semibold text-slate-700">No bookings yet</p>
+            <p className="text-sm text-slate-500 mt-1">Browse services to create your first booking.</p>
+          </div>
+          <Link
+            href="/dashboard/customer/services"
+            className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 transition-colors"
+          >
+            <Search className="size-4" /> Browse Services
+          </Link>
+        </div>
+      )}
 
-              {booking.status === 'completed' && (
-                <form action={submitBookingRating} className="space-y-3 rounded-xl border bg-slate-50 p-4">
-                  <input type="hidden" name="booking_id" value={booking.booking_id} />
-                  <p className="text-sm font-semibold text-slate-900">Rate this completed service</p>
-                  <div className="grid gap-3 md:grid-cols-[180px_1fr]">
-                    <select
-                      name="rating"
-                      required
-                      className="h-10 rounded-md border border-slate-200 bg-white px-3 text-sm outline-none focus:border-slate-400"
-                    >
-                      <option value="">Choose rating</option>
-                      <option value="5">5 - Excellent</option>
-                      <option value="4">4 - Great</option>
-                      <option value="3">3 - Good</option>
-                      <option value="2">2 - Fair</option>
-                      <option value="1">1 - Poor</option>
-                    </select>
-                    <input
-                      name="review"
-                      placeholder="Optional feedback"
-                      className="h-10 rounded-md border border-slate-200 bg-white px-3 text-sm outline-none focus:border-slate-400"
-                    />
+      {/* ── Booking cards ─────────────────────────────────────── */}
+      <div className="space-y-4">
+        {bookings.map((booking) => {
+          const s        = STATUS[booking.status] || STATUS.pending
+          const location = booking.service_location || extractFromNotes(booking.notes, 'Location')
+          const isPaid   = booking.payments?.length > 0 && booking.payments[0].status === 'paid'
+          const hasRating = booking.ratings?.length > 0
+
+          return (
+            <div
+              key={booking.booking_id}
+              className={`rounded-2xl border-2 bg-white shadow-sm overflow-hidden ${s.border}`}
+            >
+              {/* colour bar */}
+              <div className={`h-1 w-full ${s.dot}`} />
+
+              <div className="p-5 space-y-4">
+                {/* top row */}
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700">
+                      <Wrench className="size-5" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-slate-900">
+                        {booking.service_listings?.title || 'Service booking'}
+                      </p>
+                      <p className="text-sm text-slate-500">
+                        {booking.description || 'No description provided'}
+                      </p>
+                    </div>
                   </div>
-                  <button type="submit" className="inline-flex h-9 items-center justify-center rounded-md bg-slate-900 px-3 text-sm font-medium text-white hover:bg-slate-800">Submit Rating</button>
-                </form>
-              )}
+                  <StatusPill status={booking.status} />
+                </div>
 
-              {/* Payment Section */}
-              {booking.status === 'completed' && (!booking.payments || booking.payments.length === 0 || booking.payments[0].status !== 'paid') && (
-                <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 space-y-3 mt-4">
-                  <p className="text-sm font-semibold text-emerald-900">Payment Required</p>
-                  <p className="text-sm text-emerald-700">Please complete the payment for your service: PKR {Number(booking.service_listings?.price || 0).toLocaleString()}</p>
-                  <CheckoutButton bookingId={booking.booking_id} />
+                {/* meta chips */}
+                <div className="flex flex-wrap gap-3 text-sm text-slate-600">
+                  <div className="flex items-center gap-1.5">
+                    <User className="size-4 text-slate-400" />
+                    <span className="font-medium text-slate-800">
+                      {booking.service_providers?.users?.name || booking.service_providers?.users?.email || 'Unknown provider'}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <CreditCard className="size-4 text-slate-400" />
+                    <span>PKR {Number(booking.service_listings?.price || 0).toLocaleString()}</span>
+                  </div>
+                  {booking.service_date && (
+                    <div className="flex items-center gap-1.5">
+                      <CalendarDays className="size-4 text-slate-400" />
+                      <span>{formatDate(booking.service_date)}</span>
+                    </div>
+                  )}
+                  {booking.service_time && (
+                    <div className="flex items-center gap-1.5">
+                      <Clock className="size-4 text-slate-400" />
+                      <span>{booking.service_time}</span>
+                    </div>
+                  )}
+                  {location && (
+                    <div className="flex items-center gap-1.5">
+                      <MapPin className="size-4 text-slate-400" />
+                      <span className="truncate max-w-[200px]">{location}</span>
+                    </div>
+                  )}
                 </div>
-              )}
-              {booking.payments && booking.payments.length > 0 && booking.payments[0].status === 'paid' && (
-                <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 mt-4">
-                  <p className="text-sm font-semibold text-blue-900">Paid Successfully ✅</p>
-                </div>
-              )}
+
+                {/* chat CTA */}
+                {['confirmed', 'in_progress', 'accepted'].includes(booking.status) && (
+                  <Link
+                    href={`/dashboard/chat/${booking.booking_id}`}
+                    className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 transition-colors"
+                  >
+                    <MessageCircle className="size-4" /> Chat with Provider
+                  </Link>
+                )}
+
+                {/* ── Rating ──────────────────────────────────── */}
+                {booking.status === 'completed' && hasRating && (
+                  <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 space-y-1.5">
+                    <div className="flex items-center gap-2">
+                      <StarDisplay rating={booking.ratings[0].rating} />
+                      <span className="text-sm font-semibold text-emerald-800">
+                        {booking.ratings[0].rating}/5
+                      </span>
+                    </div>
+                    {booking.ratings[0].review && (
+                      <p className="text-sm text-emerald-700 italic">"{booking.ratings[0].review}"</p>
+                    )}
+                  </div>
+                )}
+
+                {booking.status === 'completed' && !hasRating && (
+                  <form action={submitBookingRating} className="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-3">
+                    <input type="hidden" name="booking_id" value={booking.booking_id} />
+                    <div className="flex items-center gap-2">
+                      <Star className="size-4 text-amber-400 fill-amber-400" />
+                      <p className="text-sm font-semibold text-slate-900">Rate this service</p>
+                    </div>
+                    <div className="grid gap-3 sm:grid-cols-[160px_1fr]">
+                      <select
+                        name="rating"
+                        required
+                        className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
+                      >
+                        <option value="">Select rating</option>
+                        <option value="5">⭐⭐⭐⭐⭐  Excellent</option>
+                        <option value="4">⭐⭐⭐⭐  Great</option>
+                        <option value="3">⭐⭐⭐  Good</option>
+                        <option value="2">⭐⭐  Fair</option>
+                        <option value="1">⭐  Poor</option>
+                      </select>
+                      <input
+                        name="review"
+                        placeholder="Leave a comment (optional)"
+                        className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
+                      />
+                    </div>
+                    <button
+                      type="submit"
+                      className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 transition-colors"
+                    >
+                      <Star className="size-3.5" /> Submit Rating
+                    </button>
+                  </form>
+                )}
+
+                {/* ── Payment ─────────────────────────────────── */}
+                {booking.status === 'completed' && isPaid && (
+                  <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3">
+                    <CheckCircle2 className="size-4 text-emerald-600 shrink-0" />
+                    <p className="text-sm font-semibold text-emerald-800">Payment confirmed</p>
+                  </div>
+                )}
+
+                {booking.status === 'completed' && !isPaid && (
+                  <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 space-y-3">
+                    <div className="flex items-center gap-2">
+                      <CreditCard className="size-4 text-amber-600" />
+                      <p className="text-sm font-semibold text-amber-900">Payment due</p>
+                    </div>
+                    <p className="text-sm text-amber-700">
+                      PKR {Number(booking.service_listings?.price || 0).toLocaleString()} — complete payment to close this booking.
+                    </p>
+                    <CheckoutButton bookingId={booking.booking_id} />
+                  </div>
+                )}
+              </div>
             </div>
-          ))
-        )}
-      </CardContent>
-    </Card>
+          )
+        })}
+      </div>
+    </div>
   )
 }

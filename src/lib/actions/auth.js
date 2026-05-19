@@ -141,6 +141,45 @@ export async function getCurrentUser() {
   }
 }
 
+export async function requestPasswordReset(formData) {
+  const supabase = await createClient()
+  const email = formData.get('email')
+  const origin = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
+
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${origin}/auth/callback?next=/reset-password`,
+  })
+
+  if (error) {
+    return { error: error.message }
+  }
+
+  return { success: true }
+}
+
+export async function updatePassword(formData) {
+  try {
+    const supabase = await createClient()
+    const password = formData.get('password')
+
+    if (!password || password.length < 6) {
+      return { error: 'Password must be at least 6 characters' }
+    }
+
+    const { error } = await supabase.auth.updateUser({ password })
+
+    if (error) {
+      return { error: error.message }
+    }
+
+    revalidatePath('/', 'layout')
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : 'Failed to update password' }
+  }
+
+  redirect('/dashboard')
+}
+
 export async function updateMyProfile(formData) {
   try {
     const supabase = await createClient()
