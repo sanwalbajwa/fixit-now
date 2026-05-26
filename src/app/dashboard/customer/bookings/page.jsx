@@ -4,9 +4,10 @@ import {
   ClipboardList, MessageCircle, Star, CreditCard,
   CheckCircle2, MapPin, CalendarDays, Clock,
   Wrench, User, Search,
+  XCircle,
 } from 'lucide-react'
 import { getCurrentUser } from '@/lib/actions/auth'
-import { getCustomerBookings, submitBookingRating } from '@/lib/actions/bookings'
+import { cancelMyBooking, getCustomerBookings, submitBookingRating } from '@/lib/actions/bookings'
 import CheckoutButton from '@/components/CheckoutButton'
 
 /* ─── helpers ──────────────────────────────────────────────── */
@@ -54,14 +55,21 @@ function formatDate(date) {
   return new Date(date).toLocaleDateString('en', { weekday: 'short', month: 'short', day: 'numeric' })
 }
 
+function getUserRecord(source) {
+  const user = source?.users
+  if (Array.isArray(user)) return user[0] || null
+  return user || null
+}
+
 /* ─── page ──────────────────────────────────────────────────── */
 export default async function CustomerBookingsPage() {
   const user = await getCurrentUser()
   if (!user) redirect('/login')
 
   const bookings = await getCustomerBookings()
-  const active    = bookings.filter((b) => !['completed', 'cancelled'].includes(b.status)).length
-  const completed = bookings.filter((b) => b.status === 'completed').length
+  const visibleBookings = bookings.filter((b) => b.status !== 'cancelled')
+  const active    = visibleBookings.filter((b) => !['completed', 'cancelled'].includes(b.status)).length
+  const completed = visibleBookings.filter((b) => b.status === 'completed').length
 
   return (
     <div className="space-y-6">
@@ -83,7 +91,7 @@ export default async function CustomerBookingsPage() {
       </div>
 
       {/* ── Empty state ───────────────────────────────────────── */}
-      {bookings.length === 0 && (
+      {visibleBookings.length === 0 && (
         <div className="flex flex-col items-center justify-center gap-4 rounded-2xl border-2 border-dashed border-slate-200 bg-white py-20 text-center">
           <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
             <ClipboardList className="size-8" />
@@ -103,11 +111,14 @@ export default async function CustomerBookingsPage() {
 
       {/* ── Booking cards ─────────────────────────────────────── */}
       <div className="space-y-4">
-        {bookings.map((booking) => {
+        {visibleBookings.map((booking) => {
           const s        = STATUS[booking.status] || STATUS.pending
           const location = booking.service_location || extractFromNotes(booking.notes, 'Location')
           const isPaid   = booking.payments?.length > 0 && booking.payments[0].status === 'paid'
           const hasRating = booking.ratings?.length > 0
+          const canCancel = !['completed', 'cancelled'].includes(booking.status)
+          const providerUser = getUserRecord(booking.service_providers)
+          const providerName = providerUser?.name || providerUser?.email || 'Unknown provider'
 
           return (
             <div
@@ -121,8 +132,16 @@ export default async function CustomerBookingsPage() {
                 {/* top row */}
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="flex items-start gap-3">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700">
-                      <Wrench className="size-5" />
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-700 text-white font-semibold">
+                      {providerUser?.profile_image_url ? (
+                        <img
+                          src={providerUser.profile_image_url}
+                          alt={providerName}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <span>{providerName.charAt(0).toUpperCase() || <Wrench className="size-5" />}</span>
+                      )}
                     </div>
                     <div>
                       <p className="font-semibold text-slate-900">
@@ -141,7 +160,7 @@ export default async function CustomerBookingsPage() {
                   <div className="flex items-center gap-1.5">
                     <User className="size-4 text-slate-400" />
                     <span className="font-medium text-slate-800">
-                      {booking.service_providers?.users?.name || booking.service_providers?.users?.email || 'Unknown provider'}
+                      {providerName}
                     </span>
                   </div>
                   <div className="flex items-center gap-1.5">
@@ -176,6 +195,18 @@ export default async function CustomerBookingsPage() {
                   >
                     <MessageCircle className="size-4" /> Chat with Provider
                   </Link>
+                )}
+
+                {canCancel && (
+                  <form action={cancelMyBooking} className="pt-1">
+                    <input type="hidden" name="booking_id" value={booking.booking_id} />
+                    <button
+                      type="submit"
+                      className="inline-flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 hover:bg-rose-100 transition-colors"
+                    >
+                      <XCircle className="size-4" /> Cancel Booking
+                    </button>
+                  </form>
                 )}
 
                 {/* ── Rating ──────────────────────────────────── */}

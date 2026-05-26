@@ -34,6 +34,7 @@ export default async function CustomerProfilePage() {
   const city  = user.user_metadata?.city    || ''
   const address = user.user_metadata?.address || ''
   const role  = user.profile?.role  || user.user_metadata?.role  || 'customer'
+  const profileImageUrl = user.profile?.profile_image_url || user.user_metadata?.profile_image_url || ''
 
   return (
     <div className="space-y-6">
@@ -46,8 +47,16 @@ export default async function CustomerProfilePage() {
 
         <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
           {/* avatar */}
-          <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl bg-white/20 text-2xl font-bold backdrop-blur-sm select-none">
-            {initials(name) || <User className="size-8" />}
+          <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-white/20 text-2xl font-bold backdrop-blur-sm select-none ring-1 ring-white/20">
+            {profileImageUrl ? (
+              <img
+                src={profileImageUrl}
+                alt={name || 'Profile photo'}
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              initials(name) || <User className="size-8" />
+            )}
           </div>
 
           {/* meta */}
@@ -79,7 +88,17 @@ export default async function CustomerProfilePage() {
           <p className="text-sm text-slate-500 mt-0.5">Update your contact details and address.</p>
         </div>
 
-        <form action={updateMyProfile} className="p-6 grid gap-5 md:grid-cols-2">
+        <form action={updateMyProfile} encType="multipart/form-data" className="p-6 grid gap-5 md:grid-cols-2">
+
+          <Field label="Profile Picture" icon={<User className="size-3.5 text-slate-400" />}>
+            <input
+              name="profile_image"
+              type="file"
+              accept="image/*"
+              className="block w-full cursor-pointer rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-emerald-50 file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-emerald-700 hover:file:bg-emerald-100"
+            />
+            <p className="text-xs text-slate-400">Upload a JPG, PNG, or WEBP image.</p>
+          </Field>
 
           <Field label="Full Name" icon={<User className="size-3.5 text-slate-400" />}>
             <input

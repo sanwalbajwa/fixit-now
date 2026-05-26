@@ -17,15 +17,13 @@ export default async function ProviderLayout({ children }) {
 
           {/* Brand */}
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-[#009689] to-teal-700 shadow-sm">
-              <span className="font-accent text-lg font-bold text-white">F</span>
-            </div>
-            <div>
-              <span className="font-accent text-xl font-bold">
-                <span className="text-[#009689]">Fixit</span><span className="text-[#f97c66]">Now</span>
-              </span>
-              <p className="text-[10px] text-slate-400 leading-none mt-0.5">Provider workspace</p>
-            </div>
+            <a href="/" className="flex items-center gap-3">
+              <img src="/Fix-it-logo.png" alt="FixItNow" className="h-10 w-auto" />
+              <div>
+                <span className="font-accent text-2xl font-bold text-gradient hidden sm:inline">FixItNow</span>
+                <p className="text-[10px] text-slate-400 leading-none mt-0.5">Provider workspace</p>
+              </div>
+            </a>
           </div>
 
           {/* Nav + actions */}

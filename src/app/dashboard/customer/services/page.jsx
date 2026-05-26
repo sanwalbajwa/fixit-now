@@ -248,7 +248,9 @@ export default async function CustomerServicesPage({ searchParams }) {
           ) : (
             <div className="grid gap-4 xl:grid-cols-2">
               {providers.map((provider) => {
-                const name    = provider.users?.name || provider.users?.email || 'Provider'
+                const user = Array.isArray(provider.users) ? provider.users[0] : provider.users
+                const name = user?.name || user?.profile?.name || user?.user_metadata?.name || user?.email || 'Provider'
+                const initialsLetter = (name && name.charAt(0)?.toUpperCase()) || 'P'
                 const rating  = Number(provider.rating || 0).toFixed(1)
                 const reviews = provider.total_reviews || 0
                 const avail   = provider.availability || ''
@@ -259,8 +261,12 @@ export default async function CustomerServicesPage({ searchParams }) {
                   >
                     {/* top row */}
                     <div className="flex items-start gap-4">
-                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-700 text-white font-bold text-sm select-none">
-                        {initials(name)}
+                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl overflow-hidden bg-gradient-to-br from-emerald-500 to-emerald-700 text-white font-bold text-sm select-none">
+                        {user?.profile_image_url ? (
+                          <img src={user.profile_image_url} alt={name} className="h-full w-full object-cover" />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center">{initialsLetter}</div>
+                        )}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5 flex-wrap">

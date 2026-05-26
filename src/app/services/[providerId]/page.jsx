@@ -1,20 +1,54 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { getProviderById } from '@/lib/actions/services'
+import { getCurrentUser, signout } from '@/lib/actions/auth'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import {
   Star, MapPin, CheckCircle, Briefcase, Phone, Mail,
   Award, ArrowLeft, Clock, BadgeCheck, ChevronRight,
 } from 'lucide-react'
 
+function CustomerDetailNav() {
+  return (
+    <nav className="border-b bg-white/90 backdrop-blur">
+      <div className="container mx-auto flex flex-col gap-4 px-4 py-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex items-center gap-3">
+          <a href="/" className="flex items-center gap-3">
+            <img src="/Fix-it-logo.png" alt="FixItNow" className="h-10 w-auto" />
+            <span className="font-accent text-2xl font-bold text-gradient hidden sm:inline">FixItNow</span>
+          </a>
+          <div className="text-xs text-slate-500">Customer workspace</div>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <Link href="/dashboard/customer"><Button variant="ghost" size="sm">Overview</Button></Link>
+          <Link href="/dashboard/customer/services"><Button variant="ghost" size="sm">Browse Services</Button></Link>
+          <Link href="/dashboard/customer/bookings"><Button variant="ghost" size="sm">My Bookings</Button></Link>
+          <Link href="/dashboard/customer/notifications"><Button variant="ghost" size="sm">Notifications</Button></Link>
+          <Link href="/dashboard/customer/profile"><Button variant="ghost" size="sm">Profile</Button></Link>
+          <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200">Customer</Badge>
+          <form action={signout}><Button variant="outline" size="sm">Sign Out</Button></form>
+        </div>
+      </div>
+    </nav>
+  )
+}
+
 export default async function ProviderDetailPage({ params }) {
   const { providerId } = await params
+  const currentUser = await getCurrentUser()
   const provider = await getProviderById(providerId)
 
   if (!provider) notFound()
 
-  const user = Array.isArray(provider.users) ? provider.users[0] : provider.users
+  const role = currentUser?.profile?.role || currentUser?.user_metadata?.role || null
+  const isCustomer = role === 'customer'
+  const backHref = isCustomer ? '/dashboard/customer/services' : '/services'
+
+  const providerUser = Array.isArray(provider.users) ? provider.users[0] : provider.users
   const listings = provider.service_listings || []
   const ratings = provider.ratings || []
 
@@ -24,7 +58,7 @@ export default async function ProviderDetailPage({ params }) {
 
   return (
     <>
-      <Navbar />
+      {isCustomer ? <CustomerDetailNav /> : <Navbar />}
 
       <div className="min-h-screen bg-slate-50">
 
@@ -38,7 +72,7 @@ export default async function ProviderDetailPage({ params }) {
 
           <div className="container relative mx-auto px-4 lg:px-8">
             <Link
-              href="/services"
+              href={backHref}
               className="mb-6 inline-flex items-center gap-1.5 text-sm font-medium text-[#009689] hover:text-[#007a6e] transition-colors"
             >
               <ArrowLeft className="size-4" /> Back to Services
@@ -49,15 +83,15 @@ export default async function ProviderDetailPage({ params }) {
 
                 {/* Avatar */}
                 <div className="relative shrink-0">
-                  {user?.profile_image_url ? (
+                  {providerUser?.profile_image_url ? (
                     <img
-                      src={user.profile_image_url}
-                      alt={user?.name}
+                      src={providerUser.profile_image_url}
+                      alt={providerUser?.name}
                       className="h-28 w-28 rounded-2xl object-cover border-2 border-[#009689]/20"
                     />
                   ) : (
                     <div className="flex h-28 w-28 items-center justify-center rounded-2xl bg-gradient-to-br from-[#009689] to-teal-700 text-white text-5xl font-bold">
-                      {user?.name?.charAt(0)?.toUpperCase() || 'P'}
+                      {providerUser?.name?.charAt(0)?.toUpperCase() || 'P'}
                     </div>
                   )}
                   {provider.is_verified && (
@@ -73,7 +107,7 @@ export default async function ProviderDetailPage({ params }) {
                     <div>
                       <div className="flex items-center gap-2 flex-wrap">
                         <h1 className="font-heading text-3xl font-bold text-slate-900">
-                          {user?.name || user?.email?.split('@')[0] || 'Provider'}
+                          {providerUser?.name || providerUser?.email?.split('@')[0] || 'Provider'}
                         </h1>
                         {provider.is_verified && (
                           <BadgeCheck className="size-6 text-[#009689] shrink-0" />
@@ -131,14 +165,14 @@ export default async function ProviderDetailPage({ params }) {
 
                   {/* Contact */}
                   <div className="flex flex-wrap gap-4">
-                    {user?.email && (
+                    {providerUser?.email && (
                       <span className="flex items-center gap-1.5 text-sm text-slate-500">
-                        <Mail className="size-4 text-[#009689]" /> {user.email}
+                        <Mail className="size-4 text-[#009689]" /> {providerUser.email}
                       </span>
                     )}
-                    {user?.phone && (
+                    {providerUser?.phone && (
                       <span className="flex items-center gap-1.5 text-sm text-slate-500">
-                        <Phone className="size-4 text-[#f97c66]" /> {user.phone}
+                        <Phone className="size-4 text-[#f97c66]" /> {providerUser.phone}
                       </span>
                     )}
                   </div>

@@ -22,11 +22,11 @@ export default async function CustomerLayout({ children }) {
       <nav className="border-b bg-white/90 backdrop-blur">
         <div className="container mx-auto flex flex-col gap-4 px-4 py-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex items-center space-x-2">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg gradient-primary">
-              <span className="font-accent text-xl font-bold text-white">F</span>
-            </div>
-            <div>
-              <span className="font-accent text-2xl font-bold text-gradient">FixItNow</span>
+            <div className="flex items-center gap-3">
+              <a href="/" className="flex items-center gap-3">
+                <img src="/Fix-it-logo.png" alt="FixItNow" className="h-10 w-auto" />
+                <span className="font-accent text-2xl font-bold text-gradient hidden sm:inline">FixItNow</span>
+              </a>
               <div className="text-xs text-slate-500">Customer workspace</div>
             </div>
           </div>

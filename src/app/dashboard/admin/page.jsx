@@ -97,10 +97,10 @@ export default async function AdminOverviewPage() {
     <div className="space-y-6">
 
       {/* ══════════════════════════════════════════════════════════
-          HERO — dark gradient with platform summary
+          HERO — light platform summary
       ══════════════════════════════════════════════════════════ */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-7 text-white shadow-xl">
-        <div className="pointer-events-none absolute -top-24 -right-24 h-72 w-72 rounded-full bg-[#009689] opacity-15 blur-3xl" />
+      <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-7 text-slate-900 shadow-sm">
+        <div className="pointer-events-none absolute -top-24 -right-24 h-72 w-72 rounded-full bg-[#009689] opacity-10 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-24 left-1/3 h-72 w-72 rounded-full bg-[#f97c66] opacity-10 blur-3xl" />
         <div className="absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r from-[#f97c66] via-[#009689] to-[#f97c66]" />
 
@@ -113,7 +113,7 @@ export default async function AdminOverviewPage() {
             <h1 className="text-3xl font-bold leading-tight">
               Platform <span className="text-[#009689]">Overview</span>
             </h1>
-            <p className="mt-1.5 text-sm text-slate-400 max-w-md">
+            <p className="mt-1.5 text-sm text-slate-600 max-w-md">
               Real-time snapshot of users, providers, bookings, and platform health.
             </p>
           </div>
@@ -124,16 +124,16 @@ export default async function AdminOverviewPage() {
               { val: s.bookings, label: 'Total Bookings', color: '#f97c66' },
               { val: s.listings, label: 'Live Listings',  color: '#10b981' },
             ].map(({ val, label, color }) => (
-              <div key={label} className="rounded-xl border border-white/10 bg-white/8 px-4 py-3 text-center backdrop-blur-sm">
+              <div key={label} className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-center backdrop-blur-sm">
                 <p className="text-2xl font-bold" style={{ color }}>{val}</p>
-                <p className="text-[11px] text-slate-400 mt-0.5">{label}</p>
+                <p className="text-[11px] text-slate-500 mt-0.5">{label}</p>
               </div>
             ))}
           </div>
         </div>
 
         {/* platform health strip */}
-        <div className="relative mt-6 grid grid-cols-2 gap-4 border-t border-white/10 pt-5 sm:grid-cols-4">
+        <div className="relative mt-6 grid grid-cols-2 gap-4 border-t border-slate-200 pt-5 sm:grid-cols-4">
           {[
             { label: 'Completion Rate',   val: `${completionRate}%`,   color: '#10b981' },
             { label: 'Verification Rate', val: `${verificationRate}%`, color: '#009689' },

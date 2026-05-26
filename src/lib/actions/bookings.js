@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient, createClient } from '@/lib/supabase/server'
 import { getCurrentUser } from './auth'
 
 export async function createBooking(formData) {
@@ -116,7 +116,8 @@ export async function getCustomerBookings() {
         users (
           name,
           phone,
-          email
+          email,
+          profile_image_url
         )
       ),
       service_listings (
@@ -172,7 +173,8 @@ export async function getProviderBookings() {
         users (
           name,
           phone,
-          email
+          email,
+          profile_image_url
         )
       ),
       service_listings (
@@ -210,6 +212,91 @@ export async function updateBookingStatus(bookingId, newStatus) {
 
   revalidatePath('/dashboard')
   return { success: true }
+}
+
+export async function cancelMyBooking(formData) {
+  let shouldRedirect = false
+
+  try {
+    const supabase = await createClient()
+    const user = await getCurrentUser()
+
+    if (!user) {
+      return { error: 'You must be logged in to cancel a booking' }
+    }
+
+    const bookingId = formData.get('booking_id')
+    const adminSupabase = createAdminClient()
+
+    const { data: customer } = await supabase
+      .from('customers')
+      .select('customer_id')
+      .eq('user_id', user.id)
+      .single()
+
+    if (!customer) {
+      return { error: 'Customer profile not found' }
+    }
+
+    const { data: booking, error: bookingError } = await supabase
+      .from('bookings')
+      .select('booking_id, status, customer_id, provider_id')
+      .eq('booking_id', bookingId)
+      .eq('customer_id', customer.customer_id)
+      .single()
+
+    if (bookingError || !booking) {
+      return { error: 'Booking not found' }
+    }
+
+    if (['completed', 'cancelled'].includes(booking.status)) {
+      return { error: 'This booking can no longer be cancelled' }
+    }
+
+    const { error } = await supabase
+      .from('bookings')
+      .update({ status: 'cancelled' })
+      .eq('booking_id', booking.booking_id)
+      .eq('customer_id', customer.customer_id)
+
+    if (error) {
+      return { error: error.message }
+    }
+
+    const { data: providerBookings, error: providerBookingsError } = await adminSupabase
+      .from('bookings')
+      .select('status')
+      .eq('provider_id', booking.provider_id)
+
+    if (!providerBookingsError) {
+      const hasActiveBookings = (providerBookings || []).some((item) => !['completed', 'cancelled'].includes(item.status))
+      const nextAvailability = hasActiveBookings ? 'busy' : 'available'
+
+      await adminSupabase
+        .from('service_providers')
+        .update({ availability: nextAvailability })
+        .eq('provider_id', booking.provider_id)
+
+      revalidatePath('/dashboard/provider')
+      revalidatePath('/dashboard/provider/profile')
+      revalidatePath('/dashboard/provider/bookings')
+      revalidatePath('/services')
+      revalidatePath(`/services/${booking.provider_id}`)
+      revalidatePath('/dashboard/customer/services')
+    }
+
+    revalidatePath('/dashboard/customer')
+    revalidatePath('/dashboard/customer/bookings')
+    revalidatePath(`/dashboard/chat/${booking.booking_id}`)
+
+    shouldRedirect = true
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : 'Failed to cancel booking' }
+  }
+
+  if (shouldRedirect) {
+    redirect('/dashboard/customer/bookings')
+  }
 }
 
 export async function submitBookingRating(formData) {

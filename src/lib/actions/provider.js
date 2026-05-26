@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createAdminClient } from '@/lib/supabase/server'
-import { getCurrentUser } from './auth'
+import { getCurrentUser, uploadProfileImage } from './auth'
 
 async function requireProvider() {
   const user = await getCurrentUser()
@@ -166,12 +166,19 @@ export async function updateProviderProfile(formData) {
     const address = formData.get('address')
     const skills = formData.get('skills')
     const availability = formData.get('availability')
+    const profileImage = formData.get('profile_image')
+    let profileImageUrl = null
+
+    if (profileImage instanceof File && profileImage.size > 0) {
+      profileImageUrl = await uploadProfileImage(supabase, user.id, profileImage)
+    }
 
     const { error: userError } = await supabase
       .from('users')
       .update({
         name,
         phone,
+        ...(profileImageUrl ? { profile_image_url: profileImageUrl } : {}),
       })
       .eq('user_id', user.id)
 
@@ -198,6 +205,7 @@ export async function updateProviderProfile(formData) {
         phone,
         city,
         address,
+        ...(profileImageUrl ? { profile_image_url: profileImageUrl } : {}),
       },
     })
 

@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense, useState } from 'react'
+import { Suspense, useActionState, useState } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { signup } from '@/lib/actions/auth'
@@ -11,21 +11,8 @@ function RegisterForm() {
   const searchParams = useSearchParams()
   const defaultRole = searchParams.get('role') || 'customer'
   
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
   const [selectedRole, setSelectedRole] = useState(defaultRole)
-
-  async function handleSubmit(formData) {
-    setLoading(true)
-    setError('')
-    
-    const result = await signup(formData)
-    
-    if (result?.error) {
-      setError(result.error)
-      setLoading(false)
-    }
-  }
+  const [state, formAction, pending] = useActionState(signup, { error: '' })
 
   const isProvider = selectedRole === 'provider'
 
@@ -58,10 +45,10 @@ function RegisterForm() {
             <p className="text-slate-600 mt-2">Create your account to get started</p>
           </div>
 
-          <form action={handleSubmit} className="space-y-5">
-            {error && (
+          <form action={formAction} className="space-y-5">
+            {state?.error && (
               <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm">
-                {error}
+                {state.error}
               </div>
             )}
 
@@ -72,6 +59,7 @@ function RegisterForm() {
                 <button
                   type="button"
                   onClick={() => setSelectedRole('customer')}
+                  disabled={pending}
                   className={`p-4 rounded-lg border-2 transition-all ${
                     selectedRole === 'customer'
                       ? 'border-emerald-500 bg-emerald-50'
@@ -84,6 +72,7 @@ function RegisterForm() {
                 <button
                   type="button"
                   onClick={() => setSelectedRole('provider')}
+                  disabled={pending}
                   className={`p-4 rounded-lg border-2 transition-all ${
                     selectedRole === 'provider'
                       ? 'border-red-500 bg-red-50'
@@ -107,7 +96,7 @@ function RegisterForm() {
                 type="text"
                 placeholder="e.g. David Finley"
                 required
-                disabled={loading}
+                disabled={pending}
                 className="h-11"
               />
             </div>
@@ -122,7 +111,7 @@ function RegisterForm() {
                 type="email"
                 placeholder="e.g. david@gmail.com"
                 required
-                disabled={loading}
+                disabled={pending}
                 className="h-11"
               />
             </div>
@@ -137,7 +126,7 @@ function RegisterForm() {
                 type="tel"
                 placeholder="e.g. +123 932545676"
                 required
-                disabled={loading}
+                disabled={pending}
                 className="h-11"
               />
             </div>
@@ -153,7 +142,7 @@ function RegisterForm() {
                 placeholder="e.g. #123@456"
                 required
                 minLength={6}
-                disabled={loading}
+                disabled={pending}
                 className="h-11"
               />
             </div>
@@ -161,9 +150,9 @@ function RegisterForm() {
             <Button
               type="submit"
               className={`w-full h-12 text-base font-semibold ${isProvider ? 'bg-red-500 hover:bg-red-600' : 'bg-emerald-600 hover:bg-emerald-700'} text-white`}
-              disabled={loading}
+              disabled={pending}
             >
-              {loading ? 'Creating account...' : 'Sign Up'}
+              {pending ? 'Creating account...' : 'Sign Up'}
             </Button>
 
             <p className="text-sm text-center text-slate-600">

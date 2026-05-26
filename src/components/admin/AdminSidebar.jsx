@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import {
   Sidebar, SidebarContent, SidebarFooter, SidebarHeader,
@@ -27,13 +28,12 @@ export default function AdminSidebar() {
   const pathname = usePathname()
 
   return (
-    // Wrap in a div that overrides the sidebar CSS variables to force dark theme
     <div style={{
-      '--sidebar':                    'oklch(0.10 0.025 264)',
-      '--sidebar-foreground':         'oklch(0.97 0.003 247)',
-      '--sidebar-accent':             'oklch(0.16 0.03 264)',
-      '--sidebar-accent-foreground':  'oklch(0.97 0.003 247)',
-      '--sidebar-border':             'oklch(1 0 0 / 8%)',
+      '--sidebar':                    'oklch(0.985 0.003 247)',
+      '--sidebar-foreground':         'oklch(0.23 0.03 264)',
+      '--sidebar-accent':             'oklch(0.96 0.01 247)',
+      '--sidebar-accent-foreground':  'oklch(0.23 0.03 264)',
+      '--sidebar-border':             'oklch(0.92 0.01 247)',
       '--sidebar-primary':            '#009689',
       '--sidebar-primary-foreground': '#ffffff',
       '--sidebar-ring':               '#009689',
@@ -41,18 +41,18 @@ export default function AdminSidebar() {
       <Sidebar collapsible="icon" variant="sidebar">
 
         {/* ── Brand header ──────────────────────────────────── */}
-        <SidebarHeader className="border-b border-white/8 pb-4">
+        <SidebarHeader className="border-b border-slate-200 pb-4">
           <div className="flex items-center gap-3 px-2 py-1">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#009689] to-teal-700 shadow-lg shadow-[#009689]/30">
-              <span className="font-accent text-base font-bold text-white">F</span>
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+              <Image src="/Fix-it-logo.png" alt="FixItNow" width={40} height={40} className="h-full w-full object-cover" priority />
             </div>
             <div className="min-w-0 group-data-[collapsible=icon]:hidden">
-              <p className="text-sm font-bold leading-none">
+              <p className="text-sm font-bold leading-none text-slate-900">
                 <span className="text-[#009689]">Fixit</span>
                 <span className="text-[#f97c66]">Now</span>
-                <span className="ml-1.5 text-white/40 font-normal text-xs">Admin</span>
+                <span className="ml-1.5 text-slate-500 font-normal text-xs">Admin</span>
               </p>
-              <p className="text-[10px] text-white/35 mt-0.5 leading-none">Operations center</p>
+              <p className="text-[10px] text-slate-500 mt-0.5 leading-none">Operations center</p>
             </div>
           </div>
         </SidebarHeader>
@@ -60,7 +60,7 @@ export default function AdminSidebar() {
         {/* ── Nav ───────────────────────────────────────────── */}
         <SidebarContent>
           <SidebarGroup>
-            <SidebarGroupLabel className="text-white/30 text-[10px] uppercase tracking-widest px-4">
+            <SidebarGroupLabel className="text-slate-400 text-[10px] uppercase tracking-widest px-4">
               Navigation
             </SidebarGroupLabel>
             <SidebarGroupContent>
@@ -76,13 +76,13 @@ export default function AdminSidebar() {
                         tooltip={item.label}
                         className={
                           active
-                            ? 'bg-[#009689]/20 text-white border border-[#009689]/30 hover:bg-[#009689]/25'
-                            : 'text-white/60 hover:bg-white/6 hover:text-white border border-transparent'
+                            ? 'bg-[#009689]/10 text-slate-900 border border-[#009689]/20 hover:bg-[#009689]/12'
+                            : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 border border-transparent'
                         }
                       >
                         <Link href={item.href} className="flex items-center gap-3">
                           <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg transition-colors ${
-                            active ? 'bg-[#009689] text-white' : 'bg-white/8 text-white/60'
+                            active ? 'bg-[#009689] text-white' : 'bg-slate-100 text-slate-500'
                           }`}>
                             <Icon className="size-3.5" />
                           </div>
@@ -101,13 +101,13 @@ export default function AdminSidebar() {
         </SidebarContent>
 
         {/* ── Footer ────────────────────────────────────────── */}
-        <SidebarFooter className="border-t border-white/8 pt-4">
-          <div className="group-data-[collapsible=icon]:hidden rounded-xl border border-white/8 bg-white/5 px-3 py-2.5 mx-2">
+        <SidebarFooter className="border-t border-slate-200 pt-4">
+          <div className="group-data-[collapsible=icon]:hidden rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 mx-2">
             <div className="flex items-center gap-2 mb-1">
               <Shield className="size-3.5 text-[#009689]" />
-              <p className="text-xs font-semibold text-white/60">Admin Access</p>
+              <p className="text-xs font-semibold text-slate-700">Admin Access</p>
             </div>
-            <p className="text-[10px] text-white/30 leading-relaxed">
+            <p className="text-[10px] text-slate-500 leading-relaxed">
               Manage users, verify providers, moderate bookings.
             </p>
           </div>

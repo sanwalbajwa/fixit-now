@@ -1,26 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useActionState } from 'react'
 import Link from 'next/link'
 import { login } from '@/lib/actions/auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 
 export default function LoginPage() {
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
-
-  async function handleSubmit(formData) {
-    setLoading(true)
-    setError('')
-    
-    const result = await login(formData)
-    
-    if (result?.error) {
-      setError(result.error)
-      setLoading(false)
-    }
-  }
+  const [state, formAction, pending] = useActionState(login, { error: '' })
 
   return (
     <div className="min-h-screen flex">
@@ -49,10 +36,10 @@ export default function LoginPage() {
             <p className="text-slate-600 mt-2">Welcome back! Please enter your details</p>
           </div>
 
-          <form action={handleSubmit} className="space-y-5">
-            {error && (
+          <form action={formAction} className="space-y-5">
+            {state?.error && (
               <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm">
-                {error}
+                {state.error}
               </div>
             )}
 
@@ -66,7 +53,7 @@ export default function LoginPage() {
                 type="email"
                 placeholder="e.g. david@gmail.com"
                 required
-                disabled={loading}
+                disabled={pending}
                 className="h-11"
               />
             </div>
@@ -81,7 +68,7 @@ export default function LoginPage() {
                 type="password"
                 placeholder="e.g. #123@456"
                 required
-                disabled={loading}
+                disabled={pending}
                 className="h-11"
               />
             </div>
@@ -99,9 +86,9 @@ export default function LoginPage() {
             <Button
               type="submit"
               className="w-full h-12 bg-emerald-600 hover:bg-emerald-700 text-white text-base font-semibold"
-              disabled={loading}
+              disabled={pending}
             >
-              {loading ? 'Signing in...' : 'Sign In'}
+              {pending ? 'Signing in...' : 'Sign In'}
             </Button>
 
             <p className="text-sm text-center text-slate-600">

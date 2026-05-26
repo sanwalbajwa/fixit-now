@@ -4,28 +4,128 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createAdminClient, createClient } from '@/lib/supabase/server'
 
-export async function login(formData) {
-  const supabase = await createClient()
+const PROFILE_IMAGE_BUCKET = 'profile-images'
 
-  const data = {
-    email: formData.get('email'),
-    password: formData.get('password'),
+function resolveFormData(arg1, arg2) {
+  if (typeof FormData !== 'undefined' && arg1 instanceof FormData) {
+    return arg1
   }
 
-  const { error } = await supabase.auth.signInWithPassword(data)
-
-  if (error) {
-    return { error: error.message }
+  if (typeof FormData !== 'undefined' && arg2 instanceof FormData) {
+    return arg2
   }
 
-  revalidatePath('/', 'layout')
-  redirect('/dashboard')
+  return null
 }
 
-export async function signup(formData) {
+export async function uploadProfileImage(adminSupabase, userId, file) {
+  if (!adminSupabase || !file || typeof file === 'string' || file.size === 0) {
+    return null
+  }
+
+  const extension = file.type?.split('/')?.[1] || 'png'
+  const path = `${userId}/${Date.now()}.${extension}`
+
+  const { error: uploadError } = await adminSupabase.storage
+    .from(PROFILE_IMAGE_BUCKET)
+    .upload(path, file, {
+      upsert: true,
+      contentType: file.type || 'image/png',
+      cacheControl: '3600',
+    })
+
+  if (uploadError) {
+    throw new Error(`Profile image upload failed: ${uploadError.message}`)
+  }
+
+  const { data } = adminSupabase.storage
+    .from(PROFILE_IMAGE_BUCKET)
+    .getPublicUrl(path)
+
+  return data.publicUrl || null
+}
+
+async function confirmCustomerAccount(email) {
+  const adminSupabase = process.env.SUPABASE_SERVICE_ROLE_KEY ? createAdminClient() : null
+
+  if (!adminSupabase) {
+    return false
+  }
+
+  const { data: profile } = await adminSupabase
+    .from('users')
+    .select('user_id, role')
+    .eq('email', email)
+    .maybeSingle()
+
+  if (!profile || profile.role !== 'customer') {
+    return false
+  }
+
+  const { error } = await adminSupabase.auth.admin.updateUserById(profile.user_id, {
+    email_confirm: true,
+  })
+
+  return !error
+}
+
+export async function login(arg1, arg2) {
+  try {
+    const supabase = await createClient()
+    const formData = resolveFormData(arg1, arg2)
+
+    if (!formData) {
+      return { error: 'Invalid login request.' }
+    }
+
+    const data = {
+      email: formData.get('email'),
+      password: formData.get('password'),
+    }
+
+    const { error } = await supabase.auth.signInWithPassword(data)
+
+    if (error) {
+      if (/confirm/i.test(error.message) && data.email) {
+        const confirmed = await confirmCustomerAccount(data.email)
+
+        if (confirmed) {
+          const retry = await supabase.auth.signInWithPassword(data)
+
+          if (!retry.error) {
+            revalidatePath('/', 'layout')
+            redirect('/dashboard')
+          }
+
+          return { error: retry.error?.message || 'Login failed. Please try again.' }
+        }
+      }
+
+      return { error: error.message }
+    }
+
+    revalidatePath('/', 'layout')
+    redirect('/dashboard')
+  } catch (error) {
+    if (typeof error === 'object' && error !== null && 'digest' in error && typeof error.digest === 'string' && error.digest.startsWith('NEXT_REDIRECT')) {
+      throw error
+    }
+
+    return {
+      error: error instanceof Error ? error.message : 'Login failed. Please try again.',
+    }
+  }
+}
+
+export async function signup(arg1, arg2) {
   try {
     const supabase = await createClient()
     const adminSupabase = process.env.SUPABASE_SERVICE_ROLE_KEY ? createAdminClient() : null
+    const formData = resolveFormData(arg1, arg2)
+
+    if (!formData) {
+      return { error: 'Invalid signup request.' }
+    }
 
     const email = formData.get('email')
     const password = formData.get('password')
@@ -33,64 +133,95 @@ export async function signup(formData) {
     const role = formData.get('role')
     const phone = formData.get('phone')
 
-    // Step 1: Sign up user
-    const { data: authData, error: signUpError } = await supabase.auth.signUp({
+    if (!adminSupabase) {
+      const { data: authData, error: signUpError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            name,
+            role,
+          }
+        }
+      })
+
+      if (signUpError) {
+        return { error: signUpError.message }
+      }
+
+      if (!authData.user) {
+        return { error: 'Failed to create user' }
+      }
+
+      revalidatePath('/', 'layout')
+      redirect('/dashboard')
+    }
+
+    const { data: authData, error: createUserError } = await adminSupabase.auth.admin.createUser({
       email,
       password,
-      options: {
-        data: {
-          name,
-          role,
-        }
-      }
+      email_confirm: true,
+      user_metadata: {
+        name,
+        role,
+        phone,
+      },
     })
 
-    if (signUpError) {
-      return { error: signUpError.message }
+    if (createUserError) {
+      return { error: createUserError.message }
     }
 
     if (!authData.user) {
       return { error: 'Failed to create user' }
     }
 
-    if (adminSupabase) {
-      // Step 2: Create user profile
-      const { error: profileError } = await adminSupabase
-        .from('users')
+    // Step 2: Create user profile
+    const { error: profileError } = await adminSupabase
+      .from('users')
+      .insert({
+        user_id: authData.user.id,
+        email,
+        name,
+        phone,
+        role,
+      })
+
+    if (profileError) {
+      return { error: profileError.message }
+    }
+
+    // Step 3: Create role-specific profile
+    if (role === 'customer') {
+      const { error: customerError } = await adminSupabase
+        .from('customers')
         .insert({
           user_id: authData.user.id,
-          email,
-          name,
-          phone,
-          role,
         })
 
-      if (profileError) {
-        return { error: profileError.message }
+      if (customerError) {
+        return { error: customerError.message }
       }
+    } else if (role === 'provider') {
+      const { error: providerError } = await adminSupabase
+        .from('service_providers')
+        .insert({
+          user_id: authData.user.id,
+          is_verified: false,
+        })
 
-      // Step 3: Create role-specific profile
-      if (role === 'customer') {
-        const { error: customerError } = await adminSupabase
-          .from('customers')
-          .insert({
-            user_id: authData.user.id,
-          })
-
-        if (customerError) {
-          return { error: customerError.message }
-        }
-      } else if (role === 'provider') {
-        const { error: providerError } = await adminSupabase
-          .from('service_providers')
-          .insert({
-            user_id: authData.user.id,
-          })
-
-        if (providerError) {
-          return { error: providerError.message }
-        }
+      if (providerError) {
+        return { error: providerError.message }
       }
+    }
+
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    })
+
+    if (signInError) {
+      return { error: signInError.message }
     }
 
     revalidatePath('/', 'layout')
@@ -194,14 +325,33 @@ export async function updateMyProfile(formData) {
     const phone = formData.get('phone')
     const city = formData.get('city')
     const address = formData.get('address')
+    const profileImage = formData.get('profile_image')
+    const currentProfileImageUrl = currentUser.profile?.profile_image_url || currentUser.user_metadata?.profile_image_url || null
+
+    let profileImageUrl = currentProfileImageUrl
+
+    if (profileImage instanceof File && profileImage.size > 0) {
+      if (!adminSupabase) {
+        return { error: 'Profile image upload requires SUPABASE_SERVICE_ROLE_KEY and a public profile-images storage bucket.' }
+      }
+
+      profileImageUrl = await uploadProfileImage(adminSupabase, currentUser.id, profileImage)
+        || currentProfileImageUrl
+    }
 
     if (adminSupabase) {
+      const updateData = {
+        name,
+        phone,
+      }
+
+      if (profileImageUrl) {
+        updateData.profile_image_url = profileImageUrl
+      }
+
       const { error: updateProfileError } = await adminSupabase
         .from('users')
-        .update({
-          name,
-          phone,
-        })
+        .update(updateData)
         .eq('user_id', currentUser.id)
 
       if (updateProfileError) {
@@ -216,6 +366,7 @@ export async function updateMyProfile(formData) {
         phone,
         city,
         address,
+        profile_image_url: profileImageUrl,
       },
     })
 
