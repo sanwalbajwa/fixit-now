@@ -1,40 +1,51 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/server'
 import { getCurrentUser } from '@/lib/actions/auth'
 import ChatBox from '@/components/ChatBox'
-import { Button } from '@/components/ui/button'
+
+function getRelationRecord(value) {
+  if (Array.isArray(value)) return value[0] || null
+  return value || null
+}
 
 export default async function ChatPage({ params }) {
-  const { bookingId } = params
+  const { bookingId } = await params
   const user = await getCurrentUser()
   if (!user) redirect('/login')
 
-  const supabase = await createClient()
+  const supabase = createAdminClient()
   
   const { data: booking, error } = await supabase
     .from('bookings')
     .select(`
-      *,
-      customers(user_id, users(name)),
-      service_providers(user_id, users(name))
+      booking_id,
+      provider_id,
+      customer_id,
+      customers(customer_id, user_id, users(name)),
+      service_providers(provider_id, user_id, users(name))
     `)
     .eq('booking_id', bookingId)
-    .single()
+    .maybeSingle()
     
   if (error || !booking) {
     return <div className="text-center py-10">Booking not found.</div>
   }
+
+  const customerRecord = getRelationRecord(booking.customers)
+  const providerRecord = getRelationRecord(booking.service_providers)
   
-  const isCustomer = booking.customers?.user_id === user.id
-  const isProvider = booking.service_providers?.user_id === user.id
+  const isCustomer = customerRecord?.user_id === user.id
+  const isProvider = providerRecord?.user_id === user.id || booking.provider_id === user.id
   
   if (!isCustomer && !isProvider) {
     return <div className="text-center py-10">Unauthorized access.</div>
   }
   
-  const otherUserId = isCustomer ? booking.service_providers.user_id : booking.customers.user_id
-  const otherUserName = isCustomer ? booking.service_providers.users?.name : booking.customers.users?.name
+  const otherUserId = isCustomer ? providerRecord?.user_id : customerRecord?.user_id
+  const otherUserName = isCustomer
+    ? getRelationRecord(providerRecord?.users)?.name
+    : getRelationRecord(customerRecord?.users)?.name
 
   return (
     <div className="max-w-4xl mx-auto py-8 px-4">

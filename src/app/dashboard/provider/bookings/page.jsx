@@ -3,7 +3,7 @@ import Link from 'next/link'
 import {
   ClipboardList, User, CalendarDays, Clock,
   MapPin, FileText, MessageCircle, CheckCircle2,
-  PlayCircle, XCircle, ThumbsUp,
+  XCircle, ThumbsUp,
 } from 'lucide-react'
 import { getCurrentUser } from '@/lib/actions/auth'
 import { getProviderBookings } from '@/lib/actions/bookings'
@@ -14,6 +14,7 @@ import { updateProviderBookingStatus } from '@/lib/actions/provider'
 const STATUS = {
   pending:     { bg: 'bg-[#f97c66]/8',   border: 'border-[#f97c66]/30',  dot: 'bg-[#f97c66]',   text: 'text-[#f97c66]',  label: 'Pending'     },
   confirmed:   { bg: 'bg-[#009689]/8',   border: 'border-[#009689]/30',  dot: 'bg-[#009689]',   text: 'text-[#009689]',  label: 'Confirmed'   },
+  accepted:    { bg: 'bg-[#009689]/8',   border: 'border-[#009689]/30',  dot: 'bg-[#009689]',   text: 'text-[#009689]',  label: 'Confirmed'   },
   in_progress: { bg: 'bg-violet-50',     border: 'border-violet-200',    dot: 'bg-violet-500',  text: 'text-violet-700', label: 'In Progress' },
   completed:   { bg: 'bg-emerald-50',    border: 'border-emerald-200',   dot: 'bg-emerald-500', text: 'text-emerald-700',label: 'Completed'   },
   cancelled:   { bg: 'bg-rose-50',       border: 'border-rose-200',      dot: 'bg-rose-400',    text: 'text-rose-700',   label: 'Cancelled'   },
@@ -35,6 +36,16 @@ function extractFromNotes(notes, label) {
   return match?.[1] || null
 }
 
+function stripMetaNotes(notes) {
+  if (!notes) return ''
+
+  return String(notes)
+    .split(/\r?\n/)
+    .map((line) => line.replace(/^\[(time|location)\]\s*/i, '').trim())
+    .filter((line) => line.length > 0)
+    .join('\n')
+}
+
 function formatDate(date) {
   if (!date) return null
   return new Date(date).toLocaleDateString('en', { weekday: 'short', month: 'short', day: 'numeric' })
@@ -44,16 +55,23 @@ function initials(name = '') {
   return name.split(' ').slice(0, 2).map((w) => w[0]?.toUpperCase() || '').join('')
 }
 
+function getUserRecord(source) {
+  const user = source?.users
+  if (Array.isArray(user)) return user[0] || null
+  return user || null
+}
+
 /* ─── page ──────────────────────────────────────────────────── */
 export default async function ProviderBookingsPage() {
   const user = await getCurrentUser()
   if (!user) redirect('/login')
 
   const bookings = await getProviderBookings()
+  const visibleBookings = bookings.filter((b) => b.status !== 'cancelled')
 
-  const pending   = bookings.filter((b) => b.status === 'pending').length
-  const active    = bookings.filter((b) => ['confirmed', 'in_progress'].includes(b.status)).length
-  const completed = bookings.filter((b) => b.status === 'completed').length
+  const pending   = visibleBookings.filter((b) => b.status === 'pending').length
+  const active    = visibleBookings.filter((b) => ['confirmed', 'accepted', 'in_progress'].includes(b.status)).length
+  const completed = visibleBookings.filter((b) => b.status === 'completed').length
 
   return (
     <div className="space-y-6">
@@ -69,7 +87,7 @@ export default async function ProviderBookingsPage() {
       </div>
 
       {/* ── Empty state ───────────────────────────────────────── */}
-      {bookings.length === 0 && (
+      {visibleBookings.length === 0 && (
         <div className="flex flex-col items-center justify-center gap-4 rounded-2xl border-2 border-dashed border-slate-200 bg-white py-20 text-center">
           <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#009689]/10 text-[#009689]">
             <ClipboardList className="size-8" />
@@ -83,9 +101,10 @@ export default async function ProviderBookingsPage() {
 
       {/* ── Booking cards ─────────────────────────────────────── */}
       <div className="space-y-4">
-        {bookings.map((booking, i) => {
+        {visibleBookings.map((booking, i) => {
           const s        = STATUS[booking.status] || STATUS.pending
-          const customer = booking.customers?.users?.name || booking.customers?.users?.email || 'Customer'
+          const customerUser = getUserRecord(booking.customers)
+          const customer = customerUser?.name || customerUser?.email || 'Customer'
           const location = booking.service_location || extractFromNotes(booking.notes, 'Location')
           const canChat  = ['confirmed', 'in_progress', 'accepted'].includes(booking.status)
 
@@ -153,8 +172,8 @@ export default async function ProviderBookingsPage() {
                         <span className="text-slate-600">{booking.description}</span>
                       </div>
                     )}
-                    {booking.notes && (
-                      <p className="text-xs text-slate-500 pl-6">{booking.notes}</p>
+                    {stripMetaNotes(booking.notes) && (
+                      <p className="text-xs text-slate-500 pl-6 whitespace-pre-line">{stripMetaNotes(booking.notes)}</p>
                     )}
                   </div>
                 )}
@@ -171,43 +190,44 @@ export default async function ProviderBookingsPage() {
 
                 {/* action buttons */}
                 {booking.status !== 'completed' && booking.status !== 'cancelled' && (
-                  <form action={updateProviderBookingStatus} className="flex flex-wrap gap-2 pt-1 border-t border-slate-100">
-                    <input type="hidden" name="booking_id" value={booking.booking_id} />
-
+                  <div className="flex flex-wrap gap-2 pt-1 border-t border-slate-100">
                     {booking.status === 'pending' && (
-                      <button
-                        type="submit" name="status" value="confirmed"
-                        className="inline-flex items-center gap-1.5 rounded-xl bg-[#009689] px-4 py-2 text-sm font-semibold text-white hover:bg-[#007a6e] transition-colors"
-                      >
-                        <ThumbsUp className="size-4" /> Confirm
-                      </button>
+                      <form action={updateProviderBookingStatus}>
+                        <input type="hidden" name="booking_id" value={booking.booking_id} />
+                        <input type="hidden" name="status" value="accepted" />
+                        <button
+                          type="submit"
+                          className="inline-flex items-center gap-1.5 rounded-xl bg-[#009689] px-4 py-2 text-sm font-semibold text-white hover:bg-[#007a6e] transition-colors"
+                        >
+                          <ThumbsUp className="size-4" /> Confirm
+                        </button>
+                      </form>
                     )}
 
-                    {booking.status === 'confirmed' && (
-                      <button
-                        type="submit" name="status" value="in_progress"
-                        className="inline-flex items-center gap-1.5 rounded-xl bg-violet-600 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-700 transition-colors"
-                      >
-                        <PlayCircle className="size-4" /> Start Work
-                      </button>
+                    {['confirmed', 'accepted', 'in_progress'].includes(booking.status) && (
+                      <form action={updateProviderBookingStatus}>
+                        <input type="hidden" name="booking_id" value={booking.booking_id} />
+                        <input type="hidden" name="status" value="completed" />
+                        <button
+                          type="submit"
+                          className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 transition-colors"
+                        >
+                          <CheckCircle2 className="size-4" /> Mark Complete
+                        </button>
+                      </form>
                     )}
 
-                    {booking.status === 'in_progress' && (
+                    <form action={updateProviderBookingStatus}>
+                      <input type="hidden" name="booking_id" value={booking.booking_id} />
+                      <input type="hidden" name="status" value="cancelled" />
                       <button
-                        type="submit" name="status" value="completed"
-                        className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 transition-colors"
+                        type="submit"
+                        className="inline-flex items-center gap-1.5 rounded-xl border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 hover:bg-rose-100 transition-colors"
                       >
-                        <CheckCircle2 className="size-4" /> Mark Complete
+                        <XCircle className="size-4" /> Cancel
                       </button>
-                    )}
-
-                    <button
-                      type="submit" name="status" value="cancelled"
-                      className="inline-flex items-center gap-1.5 rounded-xl border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 hover:bg-rose-100 transition-colors"
-                    >
-                      <XCircle className="size-4" /> Cancel
-                    </button>
-                  </form>
+                    </form>
+                  </div>
                 )}
 
                 {/* terminal states */}

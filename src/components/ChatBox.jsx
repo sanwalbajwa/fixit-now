@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { getChatMessages, sendMessage } from '@/lib/actions/chat'
 import { Button } from '@/components/ui/button'
@@ -8,8 +9,9 @@ import { Button } from '@/components/ui/button'
 export default function ChatBox({ bookingId, currentUserId, otherUserId }) {
   const [messages, setMessages] = useState([])
   const [newMessage, setNewMessage] = useState('')
-  const supabase = createClient()
   const messagesEndRef = useRef(null)
+  const router = useRouter()
+  const supabase = useMemo(() => createClient(), [])
 
   useEffect(() => {
     // Load initial messages
@@ -17,7 +19,7 @@ export default function ChatBox({ bookingId, currentUserId, otherUserId }) {
 
     // Subscribe to realtime
     const channel = supabase
-      .channel('chat_room')
+      .channel(`chat_room_${bookingId}`)
       .on('postgres_changes', {
         event: 'INSERT',
         schema: 'public',
@@ -43,10 +45,26 @@ export default function ChatBox({ bookingId, currentUserId, otherUserId }) {
     
     const msg = newMessage
     setNewMessage('')
+
+    const optimisticMessage = {
+      message_id: `temp-${Date.now()}`,
+      booking_id: bookingId,
+      sender_id: currentUserId,
+      receiver_id: otherUserId,
+      message: msg,
+      timestamp: new Date().toISOString(),
+    }
+
+    setMessages((prev) => [...prev, optimisticMessage])
+
     try {
       await sendMessage(bookingId, otherUserId, msg)
+      const freshMessages = await getChatMessages(bookingId)
+      setMessages(freshMessages)
+      router.refresh()
     } catch (err) {
       console.error(err)
+      setMessages((prev) => prev.filter((message) => message.message_id !== optimisticMessage.message_id))
       alert('Failed to send message')
     }
   }

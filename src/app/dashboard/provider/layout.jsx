@@ -1,6 +1,8 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { getCurrentUser, signout } from '@/lib/actions/auth'
+import { getMyChatThreads } from '@/lib/actions/chat'
+import ChatLauncher from '@/components/chat/ChatLauncher'
 import { Button } from '@/components/ui/button'
 
 export default async function ProviderLayout({ children }) {
@@ -9,6 +11,8 @@ export default async function ProviderLayout({ children }) {
 
   const role = user.profile?.role || user.user_metadata?.role
   if (role !== 'provider') redirect('/dashboard')
+
+  const chatThreads = await getMyChatThreads()
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -54,6 +58,7 @@ export default async function ProviderLayout({ children }) {
       </nav>
 
       <main className="container mx-auto px-4 py-8">{children}</main>
+      <ChatLauncher initialThreads={chatThreads} />
     </div>
   )
 }

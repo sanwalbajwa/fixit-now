@@ -1,6 +1,8 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { getCurrentUser, signout } from '@/lib/actions/auth'
+import { getMyChatThreads } from '@/lib/actions/chat'
+import ChatLauncher from '@/components/chat/ChatLauncher'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 
@@ -16,6 +18,8 @@ export default async function CustomerLayout({ children }) {
   if (role !== 'customer') {
     redirect('/dashboard')
   }
+
+  const chatThreads = await getMyChatThreads()
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -44,6 +48,7 @@ export default async function CustomerLayout({ children }) {
       </nav>
 
       <main className="container mx-auto px-4 py-8">{children}</main>
+      <ChatLauncher initialThreads={chatThreads} />
     </div>
   )
 }

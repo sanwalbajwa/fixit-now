@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient, createClient } from '@/lib/supabase/server'
 
 export async function getAllCategories() {
   const supabase = await createClient()
@@ -19,7 +19,7 @@ export async function getAllCategories() {
 }
 
 export async function getVerifiedProviders(filters = {}) {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
   
   // First, get all verified providers
   let query = supabase
@@ -154,7 +154,7 @@ export async function getVerifiedProviders(filters = {}) {
 }
 
 export async function getProviderById(providerId) {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
   
   const { data: provider, error } = await supabase
     .from('service_providers')
@@ -221,7 +221,7 @@ export async function getProviderById(providerId) {
 }
 
 export async function searchProviders(searchTerm) {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
   
   const { data, error } = await supabase
     .from('service_providers')

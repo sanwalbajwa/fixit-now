@@ -1,6 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { redirect } from 'next/navigation'
 import { createAdminClient } from '@/lib/supabase/server'
 import { getCurrentUser, uploadProfileImage } from './auth'
 
@@ -127,7 +128,7 @@ export async function createServiceListing(formData) {
 
 export async function updateProviderBookingStatus(formData) {
   try {
-    const { provider } = await getProviderRecord()
+    const { user, provider } = await getProviderRecord()
 
     if (!provider) {
       return { error: 'Provider profile not found' }
@@ -135,22 +136,54 @@ export async function updateProviderBookingStatus(formData) {
 
     const supabase = createAdminClient()
     const bookingId = formData.get('booking_id')
-    const status = formData.get('status')
+    const rawStatus = String(formData.get('status') || '').trim().toLowerCase()
+    const status = rawStatus === 'confirm' || rawStatus === 'confirmed' ? 'accepted' : rawStatus
 
-    const { error } = await supabase
+    if (!bookingId || !status) {
+      return { error: 'Missing booking update details' }
+    }
+
+    const { data: updatedBooking, error } = await supabase
       .from('bookings')
       .update({ status })
       .eq('booking_id', bookingId)
       .eq('provider_id', provider.provider_id)
+      .select('booking_id, provider_id, status')
+      .maybeSingle()
 
     if (error) {
       return { error: error.message }
     }
 
+    // Handle legacy data where booking.provider_id may have stored auth user id instead of provider_id.
+    if (!updatedBooking) {
+      const { data: legacyBooking, error: legacyError } = await supabase
+        .from('bookings')
+        .update({ status })
+        .eq('booking_id', bookingId)
+        .eq('provider_id', user.id)
+        .select('booking_id, provider_id, status')
+        .maybeSingle()
+
+      if (legacyError) {
+        return { error: legacyError.message }
+      }
+
+      if (!legacyBooking) {
+        return { error: 'Booking update failed. This booking may not belong to your provider account.' }
+      }
+    }
+
     revalidatePath('/dashboard/provider')
     revalidatePath('/dashboard/provider/bookings')
-    return { success: true }
+    revalidatePath('/dashboard/customer')
+    revalidatePath('/dashboard/customer/bookings')
+    redirect('/dashboard/provider/bookings')
   } catch (error) {
+    if (typeof error === 'object' && error !== null && 'digest' in error && typeof error.digest === 'string' && error.digest.startsWith('NEXT_REDIRECT')) {
+      throw error
+    }
+
     return { error: error instanceof Error ? error.message : 'Failed to update booking status' }
   }
 }

@@ -15,6 +15,7 @@ import CheckoutButton from '@/components/CheckoutButton'
 const STATUS = {
   pending:     { bg: 'bg-amber-50',   border: 'border-amber-200',  dot: 'bg-amber-400',   text: 'text-amber-700',   label: 'Pending'     },
   confirmed:   { bg: 'bg-sky-50',     border: 'border-sky-200',    dot: 'bg-sky-500',      text: 'text-sky-700',     label: 'Confirmed'   },
+  accepted:    { bg: 'bg-sky-50',     border: 'border-sky-200',    dot: 'bg-sky-500',      text: 'text-sky-700',     label: 'Confirmed'   },
   in_progress: { bg: 'bg-violet-50',  border: 'border-violet-200', dot: 'bg-violet-500',   text: 'text-violet-700',  label: 'In Progress' },
   completed:   { bg: 'bg-emerald-50', border: 'border-emerald-200',dot: 'bg-emerald-500',  text: 'text-emerald-700', label: 'Completed'   },
   cancelled:   { bg: 'bg-rose-50',    border: 'border-rose-200',   dot: 'bg-rose-400',     text: 'text-rose-700',    label: 'Cancelled'   },

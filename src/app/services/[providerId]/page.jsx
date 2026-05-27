@@ -37,6 +37,11 @@ function CustomerDetailNav() {
   )
 }
 
+function resolveUserRecord(user) {
+  if (Array.isArray(user)) return user[0] || null
+  return user || null
+}
+
 export default async function ProviderDetailPage({ params }) {
   const { providerId } = await params
   const currentUser = await getCurrentUser()
@@ -48,7 +53,9 @@ export default async function ProviderDetailPage({ params }) {
   const isCustomer = role === 'customer'
   const backHref = isCustomer ? '/dashboard/customer/services' : '/services'
 
-  const providerUser = Array.isArray(provider.users) ? provider.users[0] : provider.users
+  const providerUser = resolveUserRecord(provider.users)
+  const providerName = providerUser?.name || providerUser?.profile?.name || providerUser?.user_metadata?.name || providerUser?.email || 'Provider'
+  const providerInitial = providerName?.charAt(0)?.toUpperCase() || 'P'
   const listings = provider.service_listings || []
   const ratings = provider.ratings || []
 
@@ -86,12 +93,12 @@ export default async function ProviderDetailPage({ params }) {
                   {providerUser?.profile_image_url ? (
                     <img
                       src={providerUser.profile_image_url}
-                      alt={providerUser?.name}
+                      alt={providerName}
                       className="h-28 w-28 rounded-2xl object-cover border-2 border-[#009689]/20"
                     />
                   ) : (
                     <div className="flex h-28 w-28 items-center justify-center rounded-2xl bg-gradient-to-br from-[#009689] to-teal-700 text-white text-5xl font-bold">
-                      {providerUser?.name?.charAt(0)?.toUpperCase() || 'P'}
+                      {providerInitial}
                     </div>
                   )}
                   {provider.is_verified && (
@@ -107,7 +114,7 @@ export default async function ProviderDetailPage({ params }) {
                     <div>
                       <div className="flex items-center gap-2 flex-wrap">
                         <h1 className="font-heading text-3xl font-bold text-slate-900">
-                          {providerUser?.name || providerUser?.email?.split('@')[0] || 'Provider'}
+                          {providerName}
                         </h1>
                         {provider.is_verified && (
                           <BadgeCheck className="size-6 text-[#009689] shrink-0" />
