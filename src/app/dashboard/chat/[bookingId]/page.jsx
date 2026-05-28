@@ -62,7 +62,8 @@ export default async function ChatPage({ params }) {
       <ChatBox 
         bookingId={bookingId} 
         currentUserId={user.id} 
-        otherUserId={otherUserId} 
+        otherUserId={otherUserId}
+        otherUserName={otherUserName || 'User'}
       />
     </div>
   )

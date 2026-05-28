@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import {
-  ClipboardList, MessageCircle, Star, CreditCard,
+  ClipboardList, Star, CreditCard,
   CheckCircle2, MapPin, CalendarDays, Clock,
   Wrench, User, Search,
   XCircle,
@@ -187,16 +187,6 @@ export default async function CustomerBookingsPage() {
                     </div>
                   )}
                 </div>
-
-                {/* chat CTA */}
-                {['confirmed', 'in_progress', 'accepted'].includes(booking.status) && (
-                  <Link
-                    href={`/dashboard/chat/${booking.booking_id}`}
-                    className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 transition-colors"
-                  >
-                    <MessageCircle className="size-4" /> Chat with Provider
-                  </Link>
-                )}
 
                 {canCancel && (
                   <form action={cancelMyBooking} className="pt-1">

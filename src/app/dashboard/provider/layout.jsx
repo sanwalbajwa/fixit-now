@@ -58,7 +58,7 @@ export default async function ProviderLayout({ children }) {
       </nav>
 
       <main className="container mx-auto px-4 py-8">{children}</main>
-      <ChatLauncher initialThreads={chatThreads} />
+      <ChatLauncher initialThreads={chatThreads} currentUserId={user.id} />
     </div>
   )
 }

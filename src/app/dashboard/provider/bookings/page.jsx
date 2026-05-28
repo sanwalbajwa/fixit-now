@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import {
   ClipboardList, User, CalendarDays, Clock,
-  MapPin, FileText, MessageCircle, CheckCircle2,
+  MapPin, FileText, CheckCircle2,
   XCircle, ThumbsUp,
 } from 'lucide-react'
 import { getCurrentUser } from '@/lib/actions/auth'
@@ -176,16 +176,6 @@ export default async function ProviderBookingsPage() {
                       <p className="text-xs text-slate-500 pl-6 whitespace-pre-line">{stripMetaNotes(booking.notes)}</p>
                     )}
                   </div>
-                )}
-
-                {/* chat */}
-                {canChat && (
-                  <Link
-                    href={`/dashboard/chat/${booking.booking_id}`}
-                    className="inline-flex items-center gap-2 rounded-xl bg-[#009689] px-4 py-2 text-sm font-semibold text-white hover:bg-[#007a6e] transition-colors"
-                  >
-                    <MessageCircle className="size-4" /> Message Customer
-                  </Link>
                 )}
 
                 {/* action buttons */}

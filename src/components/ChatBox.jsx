@@ -1,36 +1,94 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { SendHorizontal } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { getChatMessages, sendMessage } from '@/lib/actions/chat'
 import { Button } from '@/components/ui/button'
 
-export default function ChatBox({ bookingId, currentUserId, otherUserId }) {
-  const [messages, setMessages] = useState([])
+function bubbleTime(value) {
+  const parsed = value ? new Date(value) : null
+  if (!parsed || Number.isNaN(parsed.getTime())) {
+    return ''
+  }
+
+  return parsed.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+}
+
+function loadCachedMessages(bookingId) {
+  if (typeof window === 'undefined') return []
+  try {
+    const raw = window.localStorage.getItem(`fixitnow_msgs_${bookingId}`)
+    if (!raw) return []
+    const parsed = JSON.parse(raw)
+    return Array.isArray(parsed) ? parsed : []
+  } catch {
+    return []
+  }
+}
+
+function saveCachedMessages(bookingId, messages) {
+  if (typeof window === 'undefined') return
+  try {
+    // Never cache optimistic (unsaved) messages
+    const toCache = messages.filter((m) => !m.__optimistic)
+    window.localStorage.setItem(`fixitnow_msgs_${bookingId}`, JSON.stringify(toCache))
+  } catch {
+    // Ignore storage errors
+  }
+}
+
+export default function ChatBox({ bookingId, currentUserId, otherUserId, otherUserName = 'User' }) {
+  const [messages, setMessages] = useState(() => loadCachedMessages(bookingId))
   const [newMessage, setNewMessage] = useState('')
+  const [isSending, setIsSending] = useState(false)
   const messagesEndRef = useRef(null)
-  const router = useRouter()
   const supabase = useMemo(() => createClient(), [])
 
+  // Persist confirmed messages to localStorage whenever they change
   useEffect(() => {
-    // Load initial messages
-    getChatMessages(bookingId).then(setMessages)
+    saveCachedMessages(bookingId, messages)
+  }, [bookingId, messages])
 
-    // Subscribe to realtime
+  useEffect(() => {
+    let isMounted = true
+
+    // Reset to cached messages for the new bookingId before the fetch lands
+    setMessages(loadCachedMessages(bookingId))
+
+    getChatMessages(bookingId).then((initialMessages) => {
+      if (!isMounted) return
+      setMessages(initialMessages || [])
+    })
+
     const channel = supabase
       .channel(`chat_room_${bookingId}`)
-      .on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'chat_messages',
-        filter: `booking_id=eq.${bookingId}`
-      }, (payload) => {
-        setMessages(prev => [...prev, payload.new])
-      })
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'chat_messages',
+          filter: `booking_id=eq.${bookingId}`,
+        },
+        (payload) => {
+          setMessages((prev) => {
+            const withoutOptimisticMatch = prev.filter(
+              (message) => !(message.__optimistic && message.sender_id === payload.new.sender_id && message.message === payload.new.message)
+            )
+
+            if (withoutOptimisticMatch.some((message) => message.message_id === payload.new.message_id)) {
+              return withoutOptimisticMatch
+            }
+
+            return [...withoutOptimisticMatch, payload.new]
+          })
+        }
+      )
       .subscribe()
 
     return () => {
+      isMounted = false
       supabase.removeChannel(channel)
     }
   }, [bookingId, supabase])
@@ -41,10 +99,11 @@ export default function ChatBox({ bookingId, currentUserId, otherUserId }) {
 
   const handleSend = async (e) => {
     e.preventDefault()
-    if (!newMessage.trim()) return
-    
-    const msg = newMessage
+    if (!newMessage.trim() || isSending) return
+
+    const msg = newMessage.trim()
     setNewMessage('')
+    setIsSending(true)
 
     const optimisticMessage = {
       message_id: `temp-${Date.now()}`,
@@ -53,49 +112,60 @@ export default function ChatBox({ bookingId, currentUserId, otherUserId }) {
       receiver_id: otherUserId,
       message: msg,
       timestamp: new Date().toISOString(),
+      __optimistic: true,
     }
 
     setMessages((prev) => [...prev, optimisticMessage])
 
     try {
       await sendMessage(bookingId, otherUserId, msg)
-      const freshMessages = await getChatMessages(bookingId)
-      setMessages(freshMessages)
-      router.refresh()
     } catch (err) {
       console.error(err)
       setMessages((prev) => prev.filter((message) => message.message_id !== optimisticMessage.message_id))
       alert('Failed to send message')
+    } finally {
+      setIsSending(false)
     }
   }
 
   return (
-    <div className="flex flex-col h-[600px] border rounded-xl overflow-hidden bg-white shadow-sm">
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50/50">
+    <div className="flex h-[70vh] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-lg">
+      <div className="border-b border-slate-100 bg-gradient-to-r from-emerald-600 to-teal-700 px-5 py-4 text-white">
+        <p className="text-sm font-semibold">{otherUserName}</p>
+        <p className="text-xs text-emerald-100">Live booking chat</p>
+      </div>
+
+      <div className="flex-1 space-y-4 overflow-y-auto bg-slate-50/70 p-4">
         {messages.map(msg => {
           const isMe = msg.sender_id === currentUserId
           return (
             <div key={msg.message_id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
-              <div className={`max-w-[70%] p-3 rounded-2xl ${isMe ? 'bg-emerald-600 text-white rounded-br-sm shadow-md' : 'bg-white border text-slate-800 rounded-bl-sm shadow-sm'}`}>
+              <div className={`max-w-[78%] rounded-2xl p-3 ${isMe ? 'rounded-br-sm bg-emerald-600 text-white shadow-md shadow-emerald-600/20' : 'rounded-bl-sm border border-slate-200 bg-white text-slate-800 shadow-sm'}`}>
                 <p className="text-sm">{msg.message}</p>
-                <span className={`text-[10px] mt-1 block ${isMe ? 'text-emerald-100' : 'text-slate-400'}`}>
-                  {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                </span>
+                {bubbleTime(msg.timestamp || msg.created_at) && (
+                  <span className={`mt-1 block text-[10px] ${isMe ? 'text-emerald-100' : 'text-slate-400'}`}>
+                    {bubbleTime(msg.timestamp || msg.created_at)}
+                  </span>
+                )}
               </div>
             </div>
           )
         })}
         <div ref={messagesEndRef} />
       </div>
-      <form onSubmit={handleSend} className="p-4 border-t bg-white flex gap-2">
+
+      <form onSubmit={handleSend} className="flex gap-2 border-t border-slate-100 bg-white p-4">
         <input
           type="text"
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
           placeholder="Type your message..."
-          className="flex-1 rounded-full border border-slate-300 px-5 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all"
+          className="h-11 flex-1 rounded-full border border-slate-300 px-5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
         />
-        <Button type="submit" className="rounded-full px-6 bg-slate-900 hover:bg-slate-800 text-white transition-all">Send</Button>
+        <Button type="submit" disabled={isSending} className="h-11 rounded-full bg-slate-900 px-5 text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60">
+          <SendHorizontal className="mr-1 size-4" />
+          Send
+        </Button>
       </form>
     </div>
   )

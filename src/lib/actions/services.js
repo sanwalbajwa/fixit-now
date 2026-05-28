@@ -19,7 +19,7 @@ export async function getAllCategories() {
 }
 
 export async function getVerifiedProviders(filters = {}) {
-  const supabase = createAdminClient()
+  const supabase = await createAdminClient()
   
   // First, get all verified providers
   let query = supabase
@@ -154,7 +154,7 @@ export async function getVerifiedProviders(filters = {}) {
 }
 
 export async function getProviderById(providerId) {
-  const supabase = createAdminClient()
+  const supabase = await createAdminClient()
   
   const { data: provider, error } = await supabase
     .from('service_providers')
@@ -221,7 +221,7 @@ export async function getProviderById(providerId) {
 }
 
 export async function searchProviders(searchTerm) {
-  const supabase = createAdminClient()
+  const supabase = await createAdminClient()
   
   const { data, error } = await supabase
     .from('service_providers')
