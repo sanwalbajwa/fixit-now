@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { getCurrentUser, signout } from '@/lib/actions/auth'
 import { getMyChatThreads } from '@/lib/actions/chat'
+import { getProviderBookings } from '@/lib/actions/bookings'
 import ChatLauncher from '@/components/chat/ChatLauncher'
 import { Button } from '@/components/ui/button'
 
@@ -13,6 +14,8 @@ export default async function ProviderLayout({ children }) {
   if (role !== 'provider') redirect('/dashboard')
 
   const chatThreads = await getMyChatThreads()
+  const bookings = await getProviderBookings()
+  const activeBookingsCount = bookings.filter((b) => !['completed', 'cancelled'].includes(b.status)).length
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -34,15 +37,20 @@ export default async function ProviderLayout({ children }) {
           <div className="flex flex-wrap items-center gap-1.5">
             {[
               { href: '/dashboard/provider',              label: 'Overview'      },
-              { href: '/dashboard/provider/bookings',     label: 'Requests'      },
+              { href: '/dashboard/provider/bookings',     label: 'Requests',     showBadge: true },
               { href: '/dashboard/provider/services',     label: 'My Services'   },
               { href: '/dashboard/provider/notifications',label: 'Notifications' },
               { href: '/dashboard/provider/profile',      label: 'Profile'       },
-            ].map(({ href, label }) => (
-              <Link key={href} href={href}>
+            ].map(({ href, label, showBadge }) => (
+              <Link key={href} href={href} className={showBadge ? 'relative' : ''}>
                 <Button variant="ghost" size="sm" className="text-slate-600 hover:text-[#009689] hover:bg-[#009689]/8">
                   {label}
                 </Button>
+                {showBadge && activeBookingsCount > 0 && (
+                  <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow-md">
+                    {activeBookingsCount > 99 ? '99+' : activeBookingsCount}
+                  </span>
+                )}
               </Link>
             ))}
 

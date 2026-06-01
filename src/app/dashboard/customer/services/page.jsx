@@ -7,7 +7,7 @@ import {
   Phone, Users,
 } from 'lucide-react'
 import { getCurrentUser } from '@/lib/actions/auth'
-import { getAllCategories, getVerifiedProviders } from '@/lib/actions/services'
+import { getAllCategories, getVerifiedProviderCities, getVerifiedProviders } from '@/lib/actions/services'
 
 /* ─── helpers ──────────────────────────────────────────────── */
 
@@ -69,14 +69,16 @@ export default async function CustomerServicesPage({ searchParams }) {
 
   const sp = await searchParams
 
-  const [categories, providers] = await Promise.all([
+  const [categories, cities, providers] = await Promise.all([
     getAllCategories(),
+    getVerifiedProviderCities(),
     getVerifiedProviders({
       category_id:  sp?.category,
       min_rating:   sp?.rating,
       sort_by:      sp?.sort,
       search:       sp?.q,
       availability: sp?.availability,
+      location:     sp?.location,
       min_price:    sp?.min_price,
       max_price:    sp?.max_price,
     }),
@@ -96,7 +98,7 @@ export default async function CustomerServicesPage({ searchParams }) {
             {activeCategory ? ` in ${activeCategory.category_name}` : ''}
           </p>
         </div>
-        {(sp?.q || sp?.category || sp?.rating) && (
+        {(sp?.q || sp?.category || sp?.rating || sp?.availability || sp?.location || sp?.min_price || sp?.max_price) && (
           <Link
             href="/dashboard/customer/services"
             className="text-sm font-medium text-rose-600 hover:text-rose-700"
@@ -134,6 +136,23 @@ export default async function CustomerServicesPage({ searchParams }) {
                 <option value="">Any status</option>
                 <option value="available">Available now</option>
                 <option value="busy">Busy</option>
+              </select>
+            </div>
+
+            {/* Location */}
+            <div>
+              <p className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-slate-500">Location</p>
+              <select
+                name="location"
+                defaultValue={sp?.location || ''}
+                className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-emerald-400"
+              >
+                <option value="">All Cities</option>
+                {cities.map((city) => (
+                  <option key={city} value={city}>
+                    {city}
+                  </option>
+                ))}
               </select>
             </div>
 
@@ -254,6 +273,7 @@ export default async function CustomerServicesPage({ searchParams }) {
                 const rating  = Number(provider.rating || 0).toFixed(1)
                 const reviews = provider.total_reviews || 0
                 const avail   = provider.availability || ''
+                const city = provider.provider_city || ''
                 return (
                   <div
                     key={provider.provider_id}
@@ -292,6 +312,13 @@ export default async function CustomerServicesPage({ searchParams }) {
                     <p className="text-sm text-slate-600 line-clamp-2">
                       {provider.skills || 'Professional home services provider.'}
                     </p>
+
+                    {city && (
+                      <div className="flex items-center gap-1.5 text-xs text-slate-500">
+                        <MapPin className="size-3.5" />
+                        {city}
+                      </div>
+                    )}
 
                     {/* meta */}
                     {provider.users?.phone && (

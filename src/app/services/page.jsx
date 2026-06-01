@@ -1,12 +1,12 @@
 import { Suspense } from 'react'
 import Link from 'next/link'
-import { getAllCategories, getVerifiedProviders } from '@/lib/actions/services'
+import { getAllCategories, getVerifiedProviderCities, getVerifiedProviders } from '@/lib/actions/services'
 import ProviderCard from '@/components/ProviderCard'
 import ServicesSortFilter from '@/components/ServicesSortFilter'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import {
-  Search, SlidersHorizontal, Star, X,
+  Search, SlidersHorizontal, Star, X, MapPin,
   CheckCircle2, Users,
 } from 'lucide-react'
 
@@ -18,6 +18,7 @@ function withParams(basePath, currentParams, updates = {}) {
     sort: currentParams?.sort,
     q: currentParams?.q,
     availability: currentParams?.availability,
+    location: currentParams?.location,
     min_price: currentParams?.min_price,
     max_price: currentParams?.max_price,
     ...updates,
@@ -31,19 +32,23 @@ function withParams(basePath, currentParams, updates = {}) {
 const RATINGS = [4.5, 4.0, 3.5, 3.0]
 
 async function ServicesContent({ searchParams }) {
-  const categories = await getAllCategories()
-  const providers = await getVerifiedProviders({
-    category_id: searchParams?.category,
-    min_rating: searchParams?.rating,
-    sort_by: searchParams?.sort,
-    search: searchParams?.q,
-    availability: searchParams?.availability,
-    min_price: searchParams?.min_price,
-    max_price: searchParams?.max_price,
-  })
+  const [categories, cities, providers] = await Promise.all([
+    getAllCategories(),
+    getVerifiedProviderCities(),
+    getVerifiedProviders({
+      category_id: searchParams?.category,
+      min_rating: searchParams?.rating,
+      sort_by: searchParams?.sort,
+      search: searchParams?.q,
+      availability: searchParams?.availability,
+      location: searchParams?.location,
+      min_price: searchParams?.min_price,
+      max_price: searchParams?.max_price,
+    }),
+  ])
 
   const selectedCategory = searchParams?.category
-  const hasFilters = !!(selectedCategory || searchParams?.rating || searchParams?.q || searchParams?.availability || searchParams?.min_price || searchParams?.max_price)
+  const hasFilters = !!(selectedCategory || searchParams?.rating || searchParams?.q || searchParams?.availability || searchParams?.location || searchParams?.min_price || searchParams?.max_price)
   const selectedCategoryName = categories.find(c => c.category_id === selectedCategory)?.category_name
 
   return (
@@ -96,6 +101,7 @@ async function ServicesContent({ searchParams }) {
               {searchParams?.rating      && <input type="hidden" name="rating"       value={searchParams.rating}      />}
               {searchParams?.sort        && <input type="hidden" name="sort"         value={searchParams.sort}        />}
               {searchParams?.availability && <input type="hidden" name="availability" value={searchParams.availability} />}
+              {searchParams?.location    && <input type="hidden" name="location"     value={searchParams.location}     />}
               {searchParams?.min_price   && <input type="hidden" name="min_price"    value={searchParams.min_price}   />}
               {searchParams?.max_price   && <input type="hidden" name="max_price"    value={searchParams.max_price}   />}
               <button
@@ -227,6 +233,38 @@ async function ServicesContent({ searchParams }) {
               </div>
 
               {/* Price range */}
+              <div className="mb-6">
+                <p className="text-xs font-bold uppercase tracking-widest text-[#009689] mb-3">Location</p>
+                <form action="/services" className="space-y-3">
+                  <select
+                    name="location"
+                    defaultValue={searchParams?.location || ''}
+                    className="h-9 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-[#009689] focus:ring-2 focus:ring-[#009689]/20 transition-colors"
+                  >
+                    <option value="">All Cities</option>
+                    {cities.map((city) => (
+                      <option key={city} value={city}>
+                        {city}
+                      </option>
+                    ))}
+                  </select>
+                  {searchParams?.category     && <input type="hidden" name="category"     value={searchParams.category}     />}
+                  {searchParams?.rating       && <input type="hidden" name="rating"       value={searchParams.rating}       />}
+                  {searchParams?.sort         && <input type="hidden" name="sort"         value={searchParams.sort}         />}
+                  {searchParams?.q            && <input type="hidden" name="q"            value={searchParams.q}            />}
+                  {searchParams?.availability && <input type="hidden" name="availability" value={searchParams.availability} />}
+                  {searchParams?.min_price    && <input type="hidden" name="min_price"    value={searchParams.min_price}    />}
+                  {searchParams?.max_price    && <input type="hidden" name="max_price"    value={searchParams.max_price}    />}
+                  <button
+                    type="submit"
+                    className="w-full rounded-xl border-2 border-[#009689]/30 bg-[#009689]/5 py-2 text-sm font-semibold text-[#009689] hover:bg-[#009689]/12 transition-colors"
+                  >
+                    Apply City Filter
+                  </button>
+                </form>
+              </div>
+
+              {/* Price range */}
               <div>
                 <p className="text-xs font-bold uppercase tracking-widest text-[#f97c66] mb-3">Price Range (PKR)</p>
                 <form action="/services" className="space-y-3">
@@ -251,6 +289,7 @@ async function ServicesContent({ searchParams }) {
                   {searchParams?.sort         && <input type="hidden" name="sort"         value={searchParams.sort}         />}
                   {searchParams?.q            && <input type="hidden" name="q"            value={searchParams.q}            />}
                   {searchParams?.availability && <input type="hidden" name="availability" value={searchParams.availability} />}
+                  {searchParams?.location     && <input type="hidden" name="location"     value={searchParams.location}     />}
                   <button
                     type="submit"
                     className="w-full rounded-xl border-2 border-[#f97c66]/30 bg-[#f97c66]/5 py-2 text-sm font-semibold text-[#f97c66] hover:bg-[#f97c66]/12 transition-colors"
@@ -301,6 +340,14 @@ async function ServicesContent({ searchParams }) {
                   <span className="flex items-center gap-1.5 rounded-full border border-[#009689]/20 bg-[#009689]/8 px-3 py-1 text-xs font-medium text-[#009689]">
                     {searchParams.availability === 'available' ? 'Available Now' : 'Busy'}
                     <Link href={withParams('/services', searchParams, { availability: undefined })}>
+                      <X className="size-3 hover:opacity-70" />
+                    </Link>
+                  </span>
+                )}
+                {searchParams?.location && (
+                  <span className="flex items-center gap-1.5 rounded-full border border-[#009689]/20 bg-[#009689]/8 px-3 py-1 text-xs font-medium text-[#009689]">
+                    {searchParams.location}
+                    <Link href={withParams('/services', searchParams, { location: undefined })}>
                       <X className="size-3 hover:opacity-70" />
                     </Link>
                   </span>

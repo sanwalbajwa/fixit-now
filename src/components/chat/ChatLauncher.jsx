@@ -24,6 +24,33 @@ function formatTime(value) {
   }).format(parsed)
 }
 
+function getLastViewedTime(threadId) {
+  if (typeof window === 'undefined') return null
+  try {
+    const timestamp = window.localStorage.getItem(`fixitnow_chat_last_view_${threadId}`)
+    return timestamp ? new Date(timestamp).getTime() : null
+  } catch {
+    return null
+  }
+}
+
+function saveLastViewedTime(threadId) {
+  if (typeof window === 'undefined') return
+  try {
+    window.localStorage.setItem(`fixitnow_chat_last_view_${threadId}`, new Date().toISOString())
+  } catch {
+    // Ignore storage errors
+  }
+}
+
+function calculateUnreadCount(thread) {
+  const lastViewedTime = getLastViewedTime(thread.bookingId)
+  const latestTime = thread.latestMessageAt ? new Date(thread.latestMessageAt).getTime() : 0
+
+  if (!lastViewedTime) return latestTime > 0 ? 1 : 0
+  return latestTime > lastViewedTime ? 1 : 0
+}
+
 export default function ChatLauncher({ initialThreads = [], currentUserId }) {
   const storageKey = useMemo(() => `fixitnow_chat_threads_${currentUserId || 'guest'}`, [currentUserId])
   const selectedThreadKey = useMemo(() => `fixitnow_chat_selected_${currentUserId || 'guest'}`, [currentUserId])
@@ -118,6 +145,22 @@ export default function ChatLauncher({ initialThreads = [], currentUserId }) {
     return [...threads].sort((left, right) => new Date(right.latestMessageAt || 0) - new Date(left.latestMessageAt || 0))
   }, [threads])
 
+  const threadUnreadCounts = useMemo(() => {
+    const counts = new Map()
+    sortedThreads.forEach((thread) => {
+      counts.set(thread.bookingId, calculateUnreadCount(thread))
+    })
+    return counts
+  }, [sortedThreads])
+
+  const totalUnread = useMemo(() => {
+    let total = 0
+    threadUnreadCounts.forEach((count) => {
+      total += count
+    })
+    return total
+  }, [threadUnreadCounts])
+
   useEffect(() => {
     if (typeof window === 'undefined' || !selectedThread) return
 
@@ -178,10 +221,13 @@ export default function ChatLauncher({ initialThreads = [], currentUserId }) {
                       <button
                         key={thread.bookingId}
                         type="button"
-                        onClick={() => setSelectedThread(thread)}
+                        onClick={() => {
+                          setSelectedThread(thread)
+                          saveLastViewedTime(thread.bookingId)
+                        }}
                         className={`flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-slate-50 ${selectedThread?.bookingId === thread.bookingId ? 'bg-emerald-50/70' : ''}`}
                       >
-                        <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-700 text-sm font-bold text-white">
+                        <div className="relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-700 text-sm font-bold text-white">
                           {thread.counterpart?.avatar ? (
                             <img
                               src={thread.counterpart.avatar}
@@ -190,6 +236,11 @@ export default function ChatLauncher({ initialThreads = [], currentUserId }) {
                             />
                           ) : (
                             <span>{initials(thread.counterpart?.name)}</span>
+                          )}
+                          {threadUnreadCounts.get(thread.bookingId) > 0 && (
+                            <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow-md">
+                              {threadUnreadCounts.get(thread.bookingId) > 9 ? '9+' : threadUnreadCounts.get(thread.bookingId)}
+                            </span>
                           )}
                         </div>
 
@@ -242,10 +293,15 @@ export default function ChatLauncher({ initialThreads = [], currentUserId }) {
         <button
           type="button"
           onClick={() => setOpen((value) => !value)}
-          className="flex h-14 w-14 items-center justify-center rounded-full bg-emerald-600 text-white shadow-lg shadow-emerald-600/25 hover:bg-emerald-700 hover:scale-105 transition-all"
+          className="relative flex h-14 w-14 items-center justify-center rounded-full bg-emerald-600 text-white shadow-lg shadow-emerald-600/25 hover:bg-emerald-700 hover:scale-105 transition-all"
           aria-label="Open chats"
         >
           <MessageCircle className="size-6" />
+          {totalUnread > 0 && (
+            <span className="absolute -top-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white shadow-md">
+              {totalUnread > 99 ? '99+' : totalUnread}
+            </span>
+          )}
         </button>
       )}
     </div>

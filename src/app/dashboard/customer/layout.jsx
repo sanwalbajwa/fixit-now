@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { getCurrentUser, signout } from '@/lib/actions/auth'
 import { getMyChatThreads } from '@/lib/actions/chat'
+import { getCustomerBookings } from '@/lib/actions/bookings'
 import ChatLauncher from '@/components/chat/ChatLauncher'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -20,6 +21,8 @@ export default async function CustomerLayout({ children }) {
   }
 
   const chatThreads = await getMyChatThreads()
+  const bookings = await getCustomerBookings()
+  const activeBookingsCount = bookings.filter((b) => !['completed', 'cancelled'].includes(b.status)).length
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -38,7 +41,14 @@ export default async function CustomerLayout({ children }) {
           <div className="flex flex-wrap items-center gap-2">
             <Link href="/dashboard/customer"><Button variant="ghost" size="sm">Overview</Button></Link>
             <Link href="/dashboard/customer/services"><Button variant="ghost" size="sm">Browse Services</Button></Link>
-            <Link href="/dashboard/customer/bookings"><Button variant="ghost" size="sm">My Bookings</Button></Link>
+            <Link href="/dashboard/customer/bookings" className="relative">
+              <Button variant="ghost" size="sm">My Bookings</Button>
+              {activeBookingsCount > 0 && (
+                <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow-md">
+                  {activeBookingsCount > 99 ? '99+' : activeBookingsCount}
+                </span>
+              )}
+            </Link>
             <Link href="/dashboard/customer/notifications"><Button variant="ghost" size="sm">Notifications</Button></Link>
             <Link href="/dashboard/customer/profile"><Button variant="ghost" size="sm">Profile</Button></Link>
             <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200">Customer</Badge>

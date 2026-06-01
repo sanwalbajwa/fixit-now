@@ -4,7 +4,7 @@ import { createAdminClient } from '@/lib/supabase/server'
 import { getCurrentUser } from './auth'
 
 async function getCurrentChatContext(bookingId) {
-  const supabase = createAdminClient()
+  const supabase = await createAdminClient()
   const user = await getCurrentUser()
 
   if (!user) {
@@ -73,7 +73,7 @@ function buildCounterpart(role, booking) {
 }
 
 export async function getMyChatThreads() {
-  const supabase = createAdminClient()
+  const supabase = await createAdminClient()
   const user = await getCurrentUser()
 
   if (!user) return []

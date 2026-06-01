@@ -93,7 +93,7 @@ export async function createBooking(formData) {
 }
 
 export async function getCustomerBookings() {
-  const supabase = createAdminClient()
+  const supabase = await createAdminClient()
   const user = await getCurrentUser()
 
   if (!user) return []
@@ -151,7 +151,7 @@ export async function getCustomerBookings() {
 }
 
 export async function getProviderBookings() {
-  const supabase = createAdminClient()
+  const supabase = await createAdminClient()
   const user = await getCurrentUser()
 
   if (!user) return []
@@ -184,6 +184,12 @@ export async function getProviderBookings() {
           category_name,
           icon_url
         )
+      ),
+      ratings (
+        rating_id,
+        rating,
+        review,
+        created_at
       )
     `)
     .eq('provider_id', provider.provider_id)

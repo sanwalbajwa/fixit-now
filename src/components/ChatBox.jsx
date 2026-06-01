@@ -30,9 +30,13 @@ function loadCachedMessages(bookingId) {
 function saveCachedMessages(bookingId, messages) {
   if (typeof window === 'undefined') return
   try {
-    // Never cache optimistic (unsaved) messages
+    // Cache all confirmed messages (not optimistic)
     const toCache = messages.filter((m) => !m.__optimistic)
-    window.localStorage.setItem(`fixitnow_msgs_${bookingId}`, JSON.stringify(toCache))
+    if (toCache.length > 0) {
+      window.localStorage.setItem(`fixitnow_msgs_${bookingId}`, JSON.stringify(toCache))
+      // Also update the last sync timestamp
+      window.localStorage.setItem(`fixitnow_msgs_sync_${bookingId}`, new Date().toISOString())
+    }
   } catch {
     // Ignore storage errors
   }
@@ -54,11 +58,30 @@ export default function ChatBox({ bookingId, currentUserId, otherUserId, otherUs
     let isMounted = true
 
     // Reset to cached messages for the new bookingId before the fetch lands
-    setMessages(loadCachedMessages(bookingId))
+    const cachedMsgs = loadCachedMessages(bookingId)
+    setMessages(cachedMsgs)
 
     getChatMessages(bookingId).then((initialMessages) => {
       if (!isMounted) return
-      setMessages(initialMessages || [])
+      // Merge cached and fetched messages, keeping all and removing duplicates
+      const messageMap = new Map()
+
+      // Add cached messages first
+      cachedMsgs.forEach((msg) => messageMap.set(msg.message_id, msg))
+
+      // Add/update with fetched messages
+      if (initialMessages && Array.isArray(initialMessages)) {
+        initialMessages.forEach((msg) => messageMap.set(msg.message_id, msg))
+      }
+
+      // Sort by timestamp
+      const merged = Array.from(messageMap.values()).sort((a, b) => {
+        const aTime = new Date(a.timestamp || a.created_at).getTime()
+        const bTime = new Date(b.timestamp || b.created_at).getTime()
+        return aTime - bTime
+      })
+
+      setMessages(merged)
     })
 
     const channel = supabase

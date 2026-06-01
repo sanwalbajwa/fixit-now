@@ -14,7 +14,7 @@ export default async function ChatPage({ params }) {
   const user = await getCurrentUser()
   if (!user) redirect('/login')
 
-  const supabase = createAdminClient()
+  const supabase = await createAdminClient()
   
   const { data: booking, error } = await supabase
     .from('bookings')

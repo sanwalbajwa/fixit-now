@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Star, CheckCircle, Briefcase } from 'lucide-react'
+import { Star, CheckCircle, Briefcase, MapPin } from 'lucide-react'
 
 const catColor = (i) =>
   i % 2 === 0
@@ -10,6 +10,7 @@ export default function ProviderCard({ provider }) {
   const user = Array.isArray(provider.users) ? provider.users[0] : provider.users
   const listings = provider.service_listings || []
   const primaryListing = listings[0]
+  const city = provider.provider_city || ''
 
   const categories = [...new Set(listings.map(l => l.service_categories?.category_name).filter(Boolean))]
 
@@ -83,6 +84,13 @@ export default function ProviderCard({ provider }) {
         <div className="flex items-start gap-2">
           <Briefcase className="size-3.5 text-slate-400 mt-0.5 shrink-0" />
           <p className="text-sm text-slate-600 line-clamp-2">{provider.skills}</p>
+        </div>
+      )}
+
+      {city && (
+        <div className="flex items-center gap-2 text-sm text-slate-600">
+          <MapPin className="size-3.5 text-slate-400" />
+          <span className="line-clamp-1">{city}</span>
         </div>
       )}
 
