@@ -18,6 +18,45 @@ export async function getAllCategories() {
   return data || []
 }
 
+function normalizeCityLabel(userMetadata = {}) {
+  const rawCity = typeof userMetadata?.city === 'string' ? userMetadata.city.trim() : ''
+  if (rawCity) {
+    return rawCity
+  }
+
+  const rawAddress = typeof userMetadata?.address === 'string' ? userMetadata.address.trim() : ''
+  if (!rawAddress) {
+    return ''
+  }
+
+  return rawAddress.split(',')[0].trim()
+}
+
+async function getAuthMetadataByUserIds(supabase, userIds = []) {
+  const uniqueUserIds = [...new Set(userIds.filter(Boolean))]
+  if (uniqueUserIds.length === 0) {
+    return {}
+  }
+
+  const locationResults = await Promise.all(
+    uniqueUserIds.map(async (userId) => {
+      const { data, error } = await supabase.auth.admin.getUserById(userId)
+
+      if (error) {
+        if (error.name !== 'AuthApiError' && error.message !== 'User not found') {
+          console.error(`Error fetching auth metadata for user ${userId}:`, error.message || error)
+        }
+
+        return [userId, null]
+      }
+
+      return [userId, data?.user?.user_metadata || null]
+    })
+  )
+
+  return Object.fromEntries(locationResults)
+}
+
 export async function getVerifiedProviderCities() {
   const supabase = await createAdminClient()
 
@@ -31,48 +70,24 @@ export async function getVerifiedProviderCities() {
     return []
   }
 
-  const uniqueUserIds = [...new Set((providers || []).map((provider) => provider.user_id).filter(Boolean))]
-  if (uniqueUserIds.length === 0) {
-    return []
-  }
-
+  const locationMetadataByUserId = await getAuthMetadataByUserIds(
+    supabase,
+    (providers || []).map((provider) => provider.user_id)
+  )
   const cityMap = new Map()
 
-  function normalizeCityLabel(userMetadata = {}) {
-    const rawCity = typeof userMetadata?.city === 'string' ? userMetadata.city.trim() : ''
-    if (rawCity) {
-      return rawCity
+  Object.values(locationMetadataByUserId).forEach((userMetadata) => {
+    const city = normalizeCityLabel(userMetadata)
+
+    if (!city) {
+      return
     }
 
-    const rawAddress = typeof userMetadata?.address === 'string' ? userMetadata.address.trim() : ''
-    if (!rawAddress) {
-      return ''
+    const key = city.toLowerCase()
+    if (!cityMap.has(key)) {
+      cityMap.set(key, city)
     }
-
-    return rawAddress.split(',')[0].trim()
-  }
-
-  await Promise.all(
-    uniqueUserIds.map(async (userId) => {
-      const { data, error: userError } = await supabase.auth.admin.getUserById(userId)
-
-      if (userError) {
-        console.error(`Error fetching auth metadata for city list user ${userId}:`, userError)
-        return
-      }
-
-      const city = normalizeCityLabel(data?.user?.user_metadata || {})
-
-      if (!city) {
-        return
-      }
-
-      const key = city.toLowerCase()
-      if (!cityMap.has(key)) {
-        cityMap.set(key, city)
-      }
-    })
-  )
+  })
 
   return [...cityMap.values()].sort((a, b) => a.localeCompare(b))
 }
@@ -112,6 +127,8 @@ export async function getVerifiedProviders(filters = {}) {
   const sortBy = filters.sort_by || 'rating'
   if (sortBy === 'rating') {
     query = query.order('rating', { ascending: false })
+  } else if (sortBy === 'reviews') {
+    query = query.order('total_reviews', { ascending: false })
   } else if (sortBy === 'newest') {
     query = query.order('created_at', { ascending: false })
   }
@@ -127,25 +144,10 @@ export async function getVerifiedProviders(filters = {}) {
     return []
   }
 
-  const locationMetadataByUserId = {}
-  if (locationFilter) {
-    const uniqueUserIds = [...new Set(providers.map((provider) => provider.user_id).filter(Boolean))]
-    const locationResults = await Promise.all(
-      uniqueUserIds.map(async (userId) => {
-        const { data, error } = await supabase.auth.admin.getUserById(userId)
-        if (error) {
-          console.error(`Error fetching auth metadata for user ${userId}:`, error)
-          return [userId, null]
-        }
-
-        return [userId, data?.user?.user_metadata || null]
-      })
-    )
-
-    locationResults.forEach(([userId, userMetadata]) => {
-      locationMetadataByUserId[userId] = userMetadata
-    })
-  }
+  const locationMetadataByUserId = await getAuthMetadataByUserIds(
+    supabase,
+    providers.map((provider) => provider.user_id)
+  )
 
   // Now fetch service listings for each provider
   const providerIds = providers.map(p => p.provider_id)
@@ -174,9 +176,7 @@ export async function getVerifiedProviders(filters = {}) {
   // Merge listings into providers
   const providersWithListings = providers.map(provider => {
     const authMetadata = locationMetadataByUserId[provider.user_id] || null
-    const metadataCity = typeof authMetadata?.city === 'string' && authMetadata.city.trim()
-      ? authMetadata.city.trim()
-      : (typeof authMetadata?.address === 'string' ? authMetadata.address.trim().split(',')[0].trim() : '')
+    const metadataCity = normalizeCityLabel(authMetadata)
     const metadataAddress = typeof authMetadata?.address === 'string' ? authMetadata.address.trim() : ''
 
     return {

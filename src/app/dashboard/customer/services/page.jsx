@@ -1,13 +1,14 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import {
-  Search, Star, BadgeCheck, SlidersHorizontal,
+  Search, Star, BadgeCheck,
   Wrench, Zap, Droplets, Paintbrush, Wind,
   Sparkles, Sofa, Cpu, ChevronRight, MapPin,
   Phone, Users,
 } from 'lucide-react'
 import { getCurrentUser } from '@/lib/actions/auth'
 import { getAllCategories, getVerifiedProviderCities, getVerifiedProviders } from '@/lib/actions/services'
+import AutoSubmitForm from '@/components/AutoSubmitForm'
 
 /* ─── helpers ──────────────────────────────────────────────── */
 
@@ -114,7 +115,7 @@ export default async function CustomerServicesPage({ searchParams }) {
         <aside className="space-y-5 h-fit">
 
           {/* Search */}
-          <form action="/dashboard/customer/services" className="space-y-3">
+          <AutoSubmitForm action="/dashboard/customer/services" className="space-y-3">
             <div className="relative">
               <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
               <input
@@ -192,13 +193,8 @@ export default async function CustomerServicesPage({ searchParams }) {
             {sp?.category && <input type="hidden" name="category" value={sp.category} />}
             {sp?.rating   && <input type="hidden" name="rating"   value={sp.rating}   />}
 
-            <button
-              type="submit"
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 transition-colors"
-            >
-              <SlidersHorizontal className="size-4" /> Apply Filters
-            </button>
-          </form>
+            <button type="submit" className="sr-only">Apply filters</button>
+          </AutoSubmitForm>
 
           {/* Categories */}
           <div>
